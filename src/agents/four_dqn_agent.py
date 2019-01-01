@@ -123,6 +123,8 @@ class DQNAgent():
 
         self.board_size = board_size
         self.action_size = action_size
+        self.save_learnt_to_file = save_learnt_to_file
+
         self.memory = collections.deque(maxlen=2000)
         self.gamma = 0.95    # discount rate
         self.epsilon = 1.0  # exploration rate
@@ -130,7 +132,6 @@ class DQNAgent():
         self.epsilon_decay = 0.9995
 
 
-        self.save_learnt_to_file = save_learnt_to_file
 
         if who == 'player' :
             self.button_color_invert = 1 # to multiple the state by this varible. meaning no change
@@ -247,3 +248,26 @@ class DQNAgent():
 
 
 
+
+class DDQNAgent(DQNAgent):
+# Double Deep Q-learning Agent
+    '''
+    The agent assumes he is holding '-1'  button,  the env is holding '+1'  when training
+
+    if now when the agent is asked to hold '+1' button, we flip all the state variables from -1 to 1 and 1 to -1
+    '''
+    def __init__(self, 
+                    who, model_name, 
+                    load_model =False,
+                    save_learnt_to_file=False,
+                    board_size = ( 6, 7) , action_size = 7 
+                    ):
+        super(DDQNAgent, self).__init__( who=who, model_name=model_name, load_model =load_model,
+                                        save_learnt_to_file=save_learnt_to_file,
+                                        board_size = board_size, action_size=action_size)
+
+
+    def update_target_network(self):
+        None
+
+    
