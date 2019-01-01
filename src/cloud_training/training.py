@@ -17,13 +17,17 @@ from four_dqn_agent import DQNAgent
 from four_dqn_agent import DDQNAgent
 
 
+from stats_logger import StatsLogger
+
+
 TARGET_NETWORK_UPDATE_FREQUENCY = 20000 
 #TARGET_NETWORK_UPDATE_FREQUENCY = 1
 MODEL_PERSISTENCE_UPDATE_FREQUENCY = 5000
 
 class Trainer():
     def __init__(self):
-        None
+        self.stats_logger = StatsLogger('Training' , './trained_models/four_a_row/')
+        self.total_episode = 0
 
     def training( self, num_round = 1, number_of_episodes=20):
 
@@ -42,9 +46,13 @@ class Trainer():
 
             self.run_qlearning( r, env, agent, max_number_of_episodes=number_of_episodes)
 
+
+    def log_iteration(self, episode, reward , t):
+        self.stats_logger.add_run(self.total_episode)
+        self.stats_logger.add_score(reward)
+        self.stats_logger.add_step(t)
+
     def run_qlearning(self, trial_round, env, agent, max_number_of_episodes):
-        self.episode_length = np.array([0])
-        self.episode_reward = np.array([0])
 
         for episode_number in range(max_number_of_episodes):
                     
@@ -75,9 +83,6 @@ class Trainer():
                 R += reward # accumulate reward - for display
                 
             
-            self.episode_length = np.append(self.episode_length,t) # keep episode length - for display
-            self.episode_reward = np.append(self.episode_reward,R) # keep episode reward - for display 
-
             if episode_number % MODEL_PERSISTENCE_UPDATE_FREQUENCY == 0 :
                 print('Save model at trial round %s episode : %s' % ( str( trial_round) , str(episode_number) ))
                 agent.save_model()
@@ -85,6 +90,10 @@ class Trainer():
             if episode_number % TARGET_NETWORK_UPDATE_FREQUENCY == 0 :
                 print('Update target model at trial round %s episode : %s'  % ( str( trial_round) , str(episode_number) ))
                 agent.update_target_network()
+        
+            self.total_episode += 1
+            self.log_iteration(self.total_episode, R, t)
+
 
         print('Save model at trial round %s episode : %s' % ( str( trial_round) , str(episode_number) ))
         agent.save_model()
