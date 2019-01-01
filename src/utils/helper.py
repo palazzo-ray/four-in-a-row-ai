@@ -1,20 +1,8 @@
 from PIL import Image
-from agent_dqn import DQNAgent
-from robot_reboot_extractor import RobotRebootExtractor
-from ricochet_env import RicochetEnv
 from keras import backend as K
 import numpy as np
 
 from keras.models import model_from_json
-
-
-def prepare_game(img_file='game1.png'):
-    im = Image.open( '../games/' + img_file).convert('RGB')
-    agent = DQNAgent(8 , 4*4)
-    rre = RobotRebootExtractor(im)
-    env = RicochetEnv(rre)
-    
-    return agent , env
 
 
 def save_model(model, file_name='model'):
