@@ -39,8 +39,9 @@ class FourInARowEnv(gym.Env):
         self.action_space = spaces.Discrete( 7 )
         self.observation_space = None
 
+        ## player is the agent or anyone play against the env
         self.player_button = -1
-        self.npc_button = 1
+        self.npc_button = 1   # npc is the one who play for the env, giving response to player
 
         if npc_agent is not None:
             self.npc_agent = npc_agent

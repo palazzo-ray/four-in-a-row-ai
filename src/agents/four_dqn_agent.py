@@ -104,7 +104,7 @@ class DQNAgent():
     if now when the agent is asked to hold '+1' button, we flip all the state variables from -1 to 1 and 1 to -1
     '''
 
-    def __init__(self, board_size, action_size, my_button_color=-1, model_name=None, continue_model =False):
+    def __init__(self, board_size = ( 6, 7) , action_size = 7, who='player', model_name=None, continue_model =False):
         self.board_size = board_size
         self.action_size = action_size
         self.memory = collections.deque(maxlen=2000)
@@ -115,9 +115,10 @@ class DQNAgent():
 
 
 
-        if my_button_color == -1 :
+        if who == 'player' :
             self.button_color_invert = 1 # to multiple the state by this varible. meaning no change
         else:
+            # who == 'npc'
             self.button_color_invert = -1 # to multiple the state by this varible. meaning -1 to 1 , 1 to -1 
 
 
@@ -132,7 +133,7 @@ class DQNAgent():
         self.model = models[model_name](action_size , self.board_size, model_save_path=model_save_path)
 
         if continue_model:
-            print('agent with button ' + str(my_button_color) + ' is loading model')
+            print('agent with button ' + str(who) + ' is loading model')
             self.model.load_model_from_file()
 
     def _remember(self, state, action, reward, next_state, done):
