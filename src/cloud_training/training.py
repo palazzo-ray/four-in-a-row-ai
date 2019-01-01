@@ -26,8 +26,9 @@ MODEL_PERSISTENCE_UPDATE_FREQUENCY = 5000
 
 class Trainer():
     def __init__(self):
-        self.stats_logger = StatsLogger('Training' , './trained_models/four_a_row/')
+        self.stats_logger = StatsLogger('Training' , '../trained_models/four_a_row/')
         self.total_episode = 0
+        self.fit_time = 0
 
     def training( self, num_round = 1, number_of_episodes=20):
 
@@ -41,16 +42,16 @@ class Trainer():
             
             print('preparing agent')
             agent = DDQNAgent( who='player' , model_name=None, load_model=True, save_learnt_to_file=True)
+            agent.add_fitting_callback(self.fitting_callback)
             
             env = FourInARowEnv(npc_agent=npc_agent)
 
             self.run_qlearning( r, env, agent, max_number_of_episodes=number_of_episodes)
 
 
-    def log_iteration(self, episode, reward , t):
-        self.stats_logger.add_run(self.total_episode)
-        self.stats_logger.add_score(reward)
-        self.stats_logger.add_step(t)
+    def fitting_callback(self, loss,accuracy, q):
+        self.fit_time += 1
+        self.stats_logger.log_fitting(self.fit_time, loss, accuracy, q)
 
     def run_qlearning(self, trial_round, env, agent, max_number_of_episodes):
 
@@ -92,7 +93,9 @@ class Trainer():
                 agent.update_target_network()
         
             self.total_episode += 1
-            self.log_iteration(self.total_episode, R, t)
+            self.stats_logger.log_iteration(self.total_episode, R, t)
+
+            self.stats_logger.save_csv()
 
 
         print('Save model at trial round %s episode : %s' % ( str( trial_round) , str(episode_number) ))

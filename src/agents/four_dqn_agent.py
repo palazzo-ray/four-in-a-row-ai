@@ -90,7 +90,8 @@ class DQNModel(BaseModel):
 
     def _compile_model(self):
         self.model.compile(loss='mse',
-                      optimizer=Adam(lr=self.learning_rate))
+                      optimizer=Adam(lr=self.learning_rate),
+                      metrics=["accuracy"])
 
 
     def predict(self, state):
@@ -104,7 +105,11 @@ class DQNModel(BaseModel):
         return state
 
     def fit(self, batch_x, batch_y, epochs=1, verbose=0):
-        self.model.fit(batch_x, batch_y, epochs=1, verbose=0)
+        fit_result = self.model.fit(batch_x, batch_y, epochs=1, verbose=0)
+
+        loss = fit_result.history["loss"][0]
+        accuracy = fit_result.history["acc"][0]
+        return loss, accuracy
 
 # Deep Q-learning Agent
 class DQNAgent():
@@ -131,6 +136,8 @@ class DQNAgent():
         self.epsilon_min = 0.30
         self.epsilon_decay = 0.9995
 
+
+        self.fitting_cb = None
 
 
         if who == 'player' :
@@ -159,6 +166,9 @@ class DQNAgent():
             if not model_exist:
                 print('New model file will be created while learn')
 
+
+    def add_fitting_callback(self, cb):
+        self.fitting_cb = cb 
 
     def _remember(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
@@ -219,7 +229,9 @@ class DQNAgent():
 
         target_f[0][action] = target
 
-        return state , target_f
+        max_q = np.max(target_f[0])
+
+        return state , target_f , max_q
 
     def _replay(self, done, batch_size):
         memory_size = len( self.memory )
@@ -231,17 +243,23 @@ class DQNAgent():
 
             train_x = []
             train_y = []
+            max_q = []
             for state, action, reward, next_state, done in minibatch:
-                x, y = self._get_training_x_y( state, action, reward, next_state, done )
+                x, y , q = self._get_training_x_y( state, action, reward, next_state, done )
 
                 train_x.append( x )
                 train_y.append( y )
+                max_q.append( q )
 
             batch_x = np.concatenate( train_x )
             batch_y = np.concatenate( train_y )
 
             #self.model.fit(x, y, epochs=1, verbose=0)
-            self.model.fit(batch_x, batch_y, epochs=1, verbose=0)
+            loss, accuracy = self.model.fit(batch_x, batch_y, epochs=1, verbose=0)
+            mean_q = np.mean(max_q)
+
+            if self.fitting_cb is not None:
+                self.fitting_cb(loss,accuracy, mean_q)
 
             if self.epsilon > self.epsilon_min:
                 self.epsilon *= self.epsilon_decay
