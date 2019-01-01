@@ -18,13 +18,14 @@ from four_dqn_agent import DDQNAgent
 
 
 TARGET_NETWORK_UPDATE_FREQUENCY = 20000 
+#TARGET_NETWORK_UPDATE_FREQUENCY = 1
 MODEL_PERSISTENCE_UPDATE_FREQUENCY = 5000
 
 class Trainer():
     def __init__(self):
         None
 
-    def training( self, num_round = 1, number_of_episodes=10):
+    def training( self, num_round = 1, number_of_episodes=20):
 
         for r in range(num_round):
             print('=================================================')

@@ -148,7 +148,9 @@ class DQNAgent():
         if model_name is None:
             model_name = 'NN_128x16'
 
-        self.model = models[model_name](action_size , self.board_size, model_save_path=model_save_path)
+        self.model_creator = lambda : models[model_name](action_size , self.board_size, model_save_path=model_save_path)
+        #self.model = models[model_name](action_size , self.board_size, model_save_path=model_save_path)
+        self.model = self.model_creator()
 
         if load_model:
             print('agent with button ' + str(who) + ' is loading model')
@@ -156,6 +158,7 @@ class DQNAgent():
 
             if not model_exist:
                 print('New model file will be created while learn')
+
 
     def _remember(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
@@ -198,11 +201,15 @@ class DQNAgent():
         self._replay(done, batch_size = 16)
 
 
+    def _get_target_state_action_value(self,next_state):
+        predict_next_state_action_values = self.model.predict(next_state)
+        return predict_next_state_action_values 
+
     def _get_training_x_y( self, state, action, reward, next_state, done ):
         target = reward
         
         if not done:
-            predict_next_state_action_values = self.model.predict(next_state)
+            predict_next_state_action_values = self._get_target_state_action_value(next_state)
             
             max_next_state_action_value = np.amax( predict_next_state_action_values[0] )
             
@@ -267,7 +274,15 @@ class DDQNAgent(DQNAgent):
                                         board_size = board_size, action_size=action_size)
 
 
+        ### create target network model
+        self.target_model = self.model_creator()
+        self.update_target_network()
+
+    def _get_target_state_action_value(self,next_state):
+        predict_next_state_action_values = self.target_model.predict(next_state)
+        return predict_next_state_action_values 
+
     def update_target_network(self):
-        None
+        self.target_model.model.set_weights(self.model.model.get_weights())
 
     
