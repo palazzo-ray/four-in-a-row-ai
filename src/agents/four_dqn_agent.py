@@ -6,11 +6,12 @@ import numpy as np
 import random
 from keras import backend as K
 from keras.models import model_from_json
-
+import os.path
 
 class BaseModel():
-    def __init__(self,model_save_path):
+    def __init__(self,model_name, model_save_path):
         self.model_save_path = model_save_path
+        self.model_name = model_name
 
     def save_model( self ):
         file_name = self.model_save_path + '/' + self.model_name
@@ -36,6 +37,11 @@ class BaseModel():
         model_json_file = file_name + '_model.json'
         model_weight_file = file_name + '_weight.h5'
 
+        # check exist
+        if not os.path.exists(model_json_file):
+            print('Model file not exist')
+            return False
+
         # load json and create model
         json_file = open(model_json_file, 'r')
         loaded_model_json = json_file.read()
@@ -47,7 +53,11 @@ class BaseModel():
         self.load_model( loaded_model )
         print("Loaded model from disk : " + str(file_name))
 
+        return True
 
+
+    def _compile_model(self):
+        raise NotImplementedError
 
 
 
@@ -57,9 +67,9 @@ class BaseModel():
 #
 class DQNModel(BaseModel):
     def __init__(self, action_size , board_size, model_save_path='.'):
-        super(DQNModel, self).__init__(model_save_path)
+        model_name = 'NN_128x16'
+        super(DQNModel, self).__init__(model_name, model_save_path)
 
-        self.model_name = 'NN_128x16'
         self.learning_rate = 0.001
         self.input_dim = np.prod( board_size )
 
@@ -104,7 +114,13 @@ class DQNAgent():
     if now when the agent is asked to hold '+1' button, we flip all the state variables from -1 to 1 and 1 to -1
     '''
 
-    def __init__(self, board_size = ( 6, 7) , action_size = 7, who='player', model_name=None, continue_model =False):
+    def __init__(self, 
+                    who, model_name, 
+                    load_model =False,
+                    save_learnt_to_file=False,
+                    board_size = ( 6, 7) , action_size = 7 
+                    ):
+
         self.board_size = board_size
         self.action_size = action_size
         self.memory = collections.deque(maxlen=2000)
@@ -114,6 +130,7 @@ class DQNAgent():
         self.epsilon_decay = 0.9995
 
 
+        self.save_learnt_to_file = save_learnt_to_file
 
         if who == 'player' :
             self.button_color_invert = 1 # to multiple the state by this varible. meaning no change
@@ -132,9 +149,12 @@ class DQNAgent():
 
         self.model = models[model_name](action_size , self.board_size, model_save_path=model_save_path)
 
-        if continue_model:
+        if load_model:
             print('agent with button ' + str(who) + ' is loading model')
-            self.model.load_model_from_file()
+            model_exist = self.model.load_model_from_file()
+
+            if not model_exist:
+                print('New model file will be created while learn')
 
     def _remember(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
@@ -220,7 +240,10 @@ class DQNAgent():
 
 
     def save_model(self):
-        self.model.save_model()
+        if self.save_learnt_to_file :
+            self.model.save_model()
+        else:
+            print('This agent is not for saving new learning to file')
 
 
 
