@@ -20,9 +20,10 @@ from four_dqn_agent import DDQNAgent
 from stats_logger import StatsLogger
 
 
-TARGET_NETWORK_UPDATE_FREQUENCY = 20000 
+TARGET_NETWORK_UPDATE_FREQUENCY = 2000 
 #TARGET_NETWORK_UPDATE_FREQUENCY = 1
-MODEL_PERSISTENCE_UPDATE_FREQUENCY = 5000
+MODEL_PERSISTENCE_UPDATE_FREQUENCY = 2000
+LOG_FILE_SAVING_FREQUENCY = 1000
 
 class Trainer():
     def __init__(self):
@@ -37,11 +38,11 @@ class Trainer():
             print('round : ' + str(r))
             print('prepare npc')
             
-            #npc_agent = DQNAgent( who='npc', model_name='NN_128x16', continue_model=True)
-            npc_agent = None ### random response agent inside the env  
+            npc_agent = DDQNAgent( who='npc' , model_name='NN_128x16', load_model=True, save_learnt_to_file=False)
+            #npc_agent = None ### random response agent inside the env  
             
             print('preparing agent')
-            agent = DDQNAgent( who='player' , model_name=None, load_model=True, save_learnt_to_file=True)
+            agent = DDQNAgent( who='player' , model_name='NN_128x16', load_model=True, save_learnt_to_file=True)
             agent.add_fitting_callback(self.fitting_callback)
             
             env = FourInARowEnv(npc_agent=npc_agent)
@@ -95,7 +96,8 @@ class Trainer():
             self.total_episode += 1
             self.stats_logger.log_iteration(self.total_episode, R, t)
 
-            self.stats_logger.save_csv()
+            if self.total_episode % LOG_FILE_SAVING_FREQUENCY == 0:
+                self.stats_logger.save_csv()
 
 
         print('Save model at trial round %s episode : %s' % ( str( trial_round) , str(episode_number) ))
