@@ -3,13 +3,14 @@ import csv
 import numpy as np
 import shutil
 import matplotlib
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import datetime
+matplotlib.use("Agg")
 
 #TRAINING_UPDATE_FREQUENCY = 1000
 #RUN_UPDATE_FREQUENCY = 10
-TRAINING_UPDATE_FREQUENCY = 1
-RUN_UPDATE_FREQUENCY = 2
+TRAINING_UPDATE_FREQUENCY = 5000
+RUN_UPDATE_FREQUENCY =  100
 MAX_LOSS = 5
 
 
@@ -98,10 +99,12 @@ class Stat:
         self.temp_y_values.append(y_value)
         if len(self.temp_y_values) % self.update_frequency == 0:
             mean_value = np.mean(self.temp_y_values)
-            #min_value = min(self.temp_y_values)
-            #max_value = max(self.temp_y_values)
+            min_value = min(self.temp_y_values)
+            max_value = max(self.temp_y_values)
 
-            self.xy_values.append( [ x_value, mean_value ] )
+            timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+            self.xy_values.append( [ x_value, mean_value , min_value, max_value , timestamp ] )
 
             self.temp_y_values = []
 
