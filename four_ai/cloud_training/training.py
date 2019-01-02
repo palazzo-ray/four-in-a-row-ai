@@ -32,11 +32,11 @@ class Trainer():
             logger.info('round : ' + str(r))
             logger.info('prepare npc')
             
-            npc_agent = DDQNAgent( who='npc' , model_name='NN_128x16', load_model=True, save_learnt_to_file=False)
+            npc_agent = DDQNAgent( who='npc' , model_name=None, load_model=True, save_learnt_to_file=False)
             #npc_agent = None ### random response agent inside the env  
             
             logger.info('preparing agent')
-            agent = DDQNAgent( who='player' , model_name='NN_128x16', load_model=True, save_learnt_to_file=True)
+            agent = DDQNAgent( who='player' , model_name=None, load_model=True, save_learnt_to_file=True)
             agent.add_fitting_callback(self.fitting_callback)
             
             env = FourInARowEnv(npc_agent=npc_agent)

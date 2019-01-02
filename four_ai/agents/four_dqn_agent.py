@@ -59,6 +59,16 @@ class BaseModel():
 
         return True
 
+    def predict(self, state):
+        act_values = self.model.predict(state)
+
+        return act_values
+    def fit(self, batch_x, batch_y, epochs=1, verbose=0):
+        fit_result = self.model.fit(batch_x, batch_y, epochs=1, verbose=0)
+
+        loss = fit_result.history["loss"][0]
+        accuracy = fit_result.history["acc"][0]
+        return loss, accuracy
 
     def _compile_model(self):
         raise NotImplementedError
@@ -70,9 +80,10 @@ class BaseModel():
 #  simple NN model
 #
 class DQNModel(BaseModel):
+    model_name = 'NN_128x16'
+
     def __init__(self, action_size , board_size, model_save_path='.'):
-        model_name = 'NN_128x16'
-        super(DQNModel, self).__init__(model_name, model_save_path)
+        super(DQNModel, self).__init__(DQNModel.model_name, model_save_path)
 
         self.learning_rate = 0.001
         self.input_dim = np.prod( board_size )
@@ -98,22 +109,13 @@ class DQNModel(BaseModel):
                       metrics=["accuracy"])
 
 
-    def predict(self, state):
-        act_values = self.model.predict(state)
-
-        return act_values
 
     def state_conversion(self,state):
         state = state.reshape( [1, self.input_dim])
 
         return state
 
-    def fit(self, batch_x, batch_y, epochs=1, verbose=0):
-        fit_result = self.model.fit(batch_x, batch_y, epochs=1, verbose=0)
 
-        loss = fit_result.history["loss"][0]
-        accuracy = fit_result.history["acc"][0]
-        return loss, accuracy
 
 # Deep Q-learning Agent
 class DQNAgent():
