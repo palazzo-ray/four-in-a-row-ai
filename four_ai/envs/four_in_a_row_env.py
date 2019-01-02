@@ -3,7 +3,6 @@ import numpy as np
 from gym import spaces
 import itertools as it
 import random
-from four_dqn_agent import DQNAgent
 
 class RandomNpcAgent():
     def __init__(self, b_height , b_width ):

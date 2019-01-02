@@ -1,8 +1,4 @@
 import sys
-sys.path.append('../src' )
-sys.path.append('../src/agents' )
-sys.path.append('../src/envs' )
-sys.path.append('../src/utils' )
 
 import numpy as np
 import gym
@@ -12,12 +8,12 @@ import matplotlib.pyplot as plt
 import matplotlib
 
 
-from four_in_a_row_env import FourInARowEnv
-from four_dqn_agent import DQNAgent
-from four_dqn_agent import DDQNAgent
+from ..envs.four_in_a_row_env import FourInARowEnv
+from ..agents.four_dqn_agent import DQNAgent
+from ..agents.four_dqn_agent import DDQNAgent
 
 
-from stats_logger import StatsLogger
+from ..utils.stats_logger import StatsLogger
 
 
 TARGET_NETWORK_UPDATE_FREQUENCY = 2000 
