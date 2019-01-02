@@ -11,7 +11,9 @@ logger.info('|         Start training                                           
 logger.info('|                                                                        |')
 logger.info('|                                                                        |')
 logger.info('==========================================================================')
-logger.info( Config.print_info(Config))
+
+Config.print_info(Config)
+
 logger.info( '')
 logger.info( '')
 
