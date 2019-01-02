@@ -138,6 +138,8 @@ class FourInARowEnv(gym.Env):
             npc_action = self.npc_agent.act( (self.board, -1 , -1))
             done, act_row , act_col = self.player_step(npc_action, self.npc_button)
             state = ( self.board.copy() , act_row, act_col )
+            self.placed_button += 1
+
             return state 
 
 
