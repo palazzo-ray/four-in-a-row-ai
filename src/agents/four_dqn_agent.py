@@ -38,8 +38,10 @@ class BaseModel():
         model_weight_file = file_name + '_weight.h5'
 
         # check exist
-        if not os.path.exists(model_json_file):
-            print('Model file not exist')
+        abs_path = os.path.abspath(str(model_json_file))
+        if not os.path.isfile(model_json_file):
+            print('Model file not exist: ' + str(model_json_file))
+            print('                    : ' + str(abs_path))
             return False
 
         # load json and create model
@@ -148,6 +150,9 @@ class DQNAgent():
 
 
         model_save_path  = '../trained_models/four_a_row'
+        if not os.path.exists(model_save_path):
+            os.makedirs(model_save_path)
+
         models = {
             'NN_128x16' : DQNModel,
         }
