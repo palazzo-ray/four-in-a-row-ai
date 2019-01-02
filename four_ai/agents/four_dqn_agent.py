@@ -7,6 +7,7 @@ import random
 from keras import backend as K
 from keras.models import model_from_json
 import os.path
+from ..utils.logger import logger
 
 class BaseModel():
     def __init__(self,model_name, model_save_path):
@@ -26,7 +27,7 @@ class BaseModel():
             json_file.write(model_json)
         # serialize weights to HDF5
         model.save_weights(model_weight_file)
-        print("Saved model to disk : " + str(file_name))
+        logger.info("Saved model to disk : " + str(file_name))
 
     def load_model( self, loaded_model ):
         self.model = loaded_model 
@@ -40,8 +41,8 @@ class BaseModel():
         # check exist
         abs_path = os.path.abspath(str(model_json_file))
         if not os.path.isfile(model_json_file):
-            print('Model file not exist: ' + str(model_json_file))
-            print('                    : ' + str(abs_path))
+            logger.info('Model file not exist: ' + str(model_json_file))
+            logger.info('                    : ' + str(abs_path))
             return False
 
         # load json and create model
@@ -53,7 +54,7 @@ class BaseModel():
         loaded_model.load_weights(model_weight_file)
 
         self.load_model( loaded_model )
-        print("Loaded model from disk : " + str(file_name))
+        logger.info("Loaded model from disk : " + str(file_name))
 
         return True
 
@@ -165,11 +166,11 @@ class DQNAgent():
         self.model = self.model_creator()
 
         if load_model:
-            print('agent with button ' + str(who) + ' is loading model')
+            logger.info('agent with button ' + str(who) + ' is loading model')
             model_exist = self.model.load_model_from_file()
 
             if not model_exist:
-                print('New model file will be created while learn')
+                logger.info('New model file will be created while learn')
 
 
     def add_fitting_callback(self, cb):
@@ -203,10 +204,10 @@ class DQNAgent():
 
 
     def learn(self, state, action, reward, next_state, done):
-        #print('state')
-        #print(state)
-        #print('next state')
-        #print(next_state)
+        #logger.info('state')
+        #logger.info(state)
+        #logger.info('next state')
+        #logger.info(next_state)
         state = self._flip_state(state)
         state = self.model.state_conversion(state)
         next_state = self._flip_state(next_state)
@@ -274,7 +275,7 @@ class DQNAgent():
         if self.save_learnt_to_file :
             self.model.save_model()
         else:
-            print('This agent is not for saving new learning to file')
+            logger.info('This agent is not for saving new learning to file')
 
 
 

@@ -3,6 +3,7 @@ import numpy as np
 from gym import spaces
 import itertools as it
 import random
+from ..utils.logger import logger
 
 class RandomNpcAgent():
     def __init__(self, b_height , b_width ):

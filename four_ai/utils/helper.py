@@ -3,6 +3,7 @@ from keras import backend as K
 import numpy as np
 
 from keras.models import model_from_json
+from logger import logger
 
 
 def save_model(model, file_name='model'):
@@ -14,7 +15,7 @@ def save_model(model, file_name='model'):
         json_file.write(model_json)
     # serialize weights to HDF5
     model.save_weights(model_weight_file)
-    print("Saved model to disk")
+    logger.info("Saved model to disk")
     
 
 def load_model(file_name='model'):
@@ -27,7 +28,7 @@ def load_model(file_name='model'):
     loaded_model = model_from_json(loaded_model_json)
     # load weights into new model
     loaded_model.load_weights(model_weight_file)
-    print("Loaded model from disk")
+    logger.info("Loaded model from disk")
 
 
     return loaded_model
@@ -40,7 +41,7 @@ def show_trainable_params(model):
     non_trainable_count = int(
         np.sum([K.count_params(p) for p in set(model.non_trainable_weights)]))
 
-    print('Total params: {:,}'.format(trainable_count + non_trainable_count))
-    print('Trainable params: {:,}'.format(trainable_count))
-    print('Non-trainable params: {:,}'.format(non_trainable_count))
+    logger.info('Total params: {:,}'.format(trainable_count + non_trainable_count))
+    logger.info('Trainable params: {:,}'.format(trainable_count))
+    logger.info('Non-trainable params: {:,}'.format(non_trainable_count))
 

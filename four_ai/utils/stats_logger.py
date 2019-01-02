@@ -5,6 +5,8 @@ import shutil
 import matplotlib
 import matplotlib.pyplot as plt
 import datetime
+from .logger import logger
+
 matplotlib.use("Agg")
 
 #TRAINING_UPDATE_FREQUENCY = 1000
@@ -31,7 +33,7 @@ class StatsLogger:
     def add_run(self, run):
 
         #if run % RUN_UPDATE_FREQUENCY == 0:
-        #    print('{{"metric": "run", "value": {}}}'.format(run))
+        #    logger.info('{{"metric": "run", "value": {}}}'.format(run))
         return 
 
     def add_score(self, run, score):

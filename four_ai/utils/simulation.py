@@ -6,8 +6,10 @@ from matplotlib import pyplot as plt
 from matplotlib import pylab
 import matplotlib.gridspec as gridspec
 
+from logger import logger
+
 class Experiment(object):
-    def __init__(self, env, agent, debug_print_interval = 0):
+    def __init__(self, env, agent, debug_logger.info_interval = 0):
         
         self.env = env
         self.agent = agent
@@ -52,7 +54,7 @@ class Experiment(object):
         self.line, = self.ax1.plot(range(len(self.episode_length)),self.episode_length)
         self.line2, = self.ax2.plot(range(len(self.episode_reward)),self.episode_reward)
 
-        self.debug_print_interval = debug_print_interval
+        self.debug_logger.info_interval = debug_logger.info_interval
         
     def update_display_step(self):
         if not hasattr(self, 'imgplot'):
@@ -76,8 +78,8 @@ class Experiment(object):
     def run_bandit(self, max_number_of_trials=1000, display_frequency=1):
         self.fig.clf()
         
-        print("Distribution:", self.env.distribution, self.env.reward_parameters, flush = True)
-        print("Optimal arm:", self.env.optimal_arm, flush = True)
+        logger.info("Distribution:", self.env.distribution, self.env.reward_parameters, flush = True)
+        logger.info("Optimal arm:", self.env.optimal_arm, flush = True)
         
         if self.env.distribution != "normal":
             plotting.plot_arm_rewards(self.env.reward_parameters)
@@ -105,10 +107,10 @@ class Experiment(object):
             stats.cumulative_rewards[trial] = cumulative_reward
             stats.regrets[trial] = cumulative_regret
 
-        print("--------------------------------------------------", flush = True)
-        print("Policy:", self.agent.name, "\nAverage Reward:", cumulative_reward / max_number_of_trials, \
+        logger.info("--------------------------------------------------", flush = True)
+        logger.info("Policy:", self.agent.name, "\nAverage Reward:", cumulative_reward / max_number_of_trials, \
                 "\nAverage Regret:", cumulative_regret / max_number_of_trials, flush = True)
-        print("Arm pulls:", self.agent.total_counts, flush = True)
+        logger.info("Arm pulls:", self.agent.total_counts, flush = True)
          
         plotting.plot_reward_regret(stats)
         
@@ -146,7 +148,7 @@ class Experiment(object):
                     self.update_display_step()
                 
                 if t > max_number_of_steps :
-                    print( 'too many steps. Stopped')
+                    logger.info( 'too many steps. Stopped')
                     break
             
             self.episode_length = np.append(self.episode_length,t) # keep episode length - for display
@@ -204,9 +206,9 @@ class Experiment(object):
             self.episode_length = np.append(self.episode_length,t) # keep episode length - for display
             self.episode_reward = np.append(self.episode_reward,R) # keep episode reward - for display 
 
-            if (self.debug_print_interval != 0 ):
-                if episode_number % self.debug_print_interval == 0 :
-                    print('episode : ' + str(episode_number))
+            if (self.debug_logger.info_interval != 0 ):
+                if episode_number % self.debug_logger.info_interval == 0 :
+                    logger.info('episode : ' + str(episode_number))
                     self.agent.save_model()
             
             # if interactive display, show update for the episode
@@ -264,7 +266,7 @@ class Experiment(object):
             self.episode_length = np.append(self.episode_length,t) # keep episode length - for display
             self.episode_reward = np.append(self.episode_reward,R) # keep episode reward - for display 
 
-            print('episode : ' + str(episode_number))
+            logger.info('episode : ' + str(episode_number))
             
             # if interactive display, show update for the episode
             if interactive:

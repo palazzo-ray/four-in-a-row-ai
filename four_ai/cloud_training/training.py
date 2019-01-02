@@ -14,6 +14,7 @@ from ..agents.four_dqn_agent import DDQNAgent
 
 
 from ..utils.stats_logger import StatsLogger
+from ..utils.logger import logger 
 
 
 TARGET_NETWORK_UPDATE_FREQUENCY = 2000 
@@ -30,14 +31,14 @@ class Trainer():
     def training( self, num_round = 1, number_of_episodes=20):
 
         for r in range(num_round):
-            print('=================================================')
-            print('round : ' + str(r))
-            print('prepare npc')
+            logger.info('=================================================')
+            logger.info('round : ' + str(r))
+            logger.info('prepare npc')
             
             npc_agent = DDQNAgent( who='npc' , model_name='NN_128x16', load_model=True, save_learnt_to_file=False)
             #npc_agent = None ### random response agent inside the env  
             
-            print('preparing agent')
+            logger.info('preparing agent')
             agent = DDQNAgent( who='player' , model_name='NN_128x16', load_model=True, save_learnt_to_file=True)
             agent.add_fitting_callback(self.fitting_callback)
             
@@ -82,11 +83,11 @@ class Trainer():
                 
             
             if episode_number % MODEL_PERSISTENCE_UPDATE_FREQUENCY == 0 :
-                print('Save model at trial round %s episode : %s' % ( str( trial_round) , str(episode_number) ))
+                logger.info('Save model at trial round %s episode : %s' % ( str( trial_round) , str(episode_number) ))
                 agent.save_model()
 
             if episode_number % TARGET_NETWORK_UPDATE_FREQUENCY == 0 :
-                print('Update target model at trial round %s episode : %s'  % ( str( trial_round) , str(episode_number) ))
+                logger.info('Update target model at trial round %s episode : %s'  % ( str( trial_round) , str(episode_number) ))
                 agent.update_target_network()
         
             self.total_episode += 1
@@ -96,5 +97,5 @@ class Trainer():
                 self.stats_logger.save_csv()
 
 
-        print('Save model at trial round %s episode : %s' % ( str( trial_round) , str(episode_number) ))
+        logger.info('Save model at trial round %s episode : %s' % ( str( trial_round) , str(episode_number) ))
         agent.save_model()
