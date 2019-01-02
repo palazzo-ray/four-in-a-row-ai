@@ -6,6 +6,8 @@ import numpy as np
 import random
 from keras import backend as K
 from keras.models import model_from_json
+from keras.layers import Conv2D, Flatten, Dense
+from keras.optimizers import RMSprop
 import os.path
 from ..utils.logger import logger
 from ..config.config import Config
@@ -70,8 +72,6 @@ class BaseModel():
         accuracy = fit_result.history["acc"][0]
         return loss, accuracy
 
-    def _compile_model(self):
-        raise NotImplementedError
 
 
 
@@ -108,15 +108,80 @@ class DQNModel(BaseModel):
                       optimizer=Adam(lr=self.learning_rate),
                       metrics=["accuracy"])
 
-
-
     def state_conversion(self,state):
         state = state.reshape( [1, self.input_dim])
 
         return state
 
 
+#######################
+#
+#  CNN
+#
+class DQN_CNN_Model(BaseModel):
+    model_name = 'CNN_32x64x128'
 
+    def __init__(self, action_size , board_size, model_save_path='.'):
+        super(DQN_CNN_Model, self).__init__(DQN_CNN_Model.model_name, model_save_path)
+
+        self.learning_rate = 0.001
+        self.input_shape = ( board_size[0] , board_size[1] , 1 )
+
+        self.learning_rate = 0.00025
+        self.learning_rho=0.95
+        self.learning_epsilon=0.01
+
+        print('dkkdkdkdkddkdkkd')
+        print(self.input_shape)
+
+        self.action_size = action_size
+        self.model = self._build_model()
+
+
+    def _build_model(self):
+        # Neural Net for Deep-Q learning Model
+        model = Sequential()
+        model.add(Conv2D(32,
+                              (4,4),
+                              activation="relu",
+                              input_shape=self.input_shape,
+                              data_format="channels_last"))
+        model.add(Conv2D(64,
+                              (3,3),
+                              activation="relu",
+                              data_format="channels_last"
+                              ))
+        model.add(Flatten())
+        model.add(Dense(128, activation="relu"))
+        model.add(Dense(self.action_size, activation='linear'))
+
+        self.model = model
+        self._compile_model()
+        return model
+
+
+    def state_conversion(self,state):
+        print('state_conver')
+        print(state)
+        print(state.shape)
+        state = state.reshape(self.input_shape)
+        print('new shape')
+        print(state.shape)
+        return state
+
+    def _compile_model(self):
+        self.model.compile(loss="mean_squared_error",
+                            optimizer=RMSprop(lr=self.learning_rate,
+                                             rho=self.learning_rho,
+                                             epsilon=self.learning_epsilon),
+                            metrics=["accuracy"])
+
+
+        self.model.compile(loss='mse',
+                      optimizer=Adam(lr=self.learning_rate),
+                      metrics=["accuracy"])
+
+ 
 # Deep Q-learning Agent
 class DQNAgent():
     '''
@@ -158,12 +223,15 @@ class DQNAgent():
             os.makedirs(model_save_path)
 
         models = {
-            'NN_128x16' : DQNModel,
+            DQNModel.model_name  : DQNModel,
+            DQN_CNN_Model.model_name : DQN_CNN_Model
         }
 
         if model_name is None:
-            model_name = 'NN_128x16'
+            model_name = DQN_CNN_Model.model_name 
 
+        print('jjjjjjjjjjjjjjjjjjjjj')
+        print('model ' + str(model_name))
         self.model_creator = lambda : models[model_name](action_size , self.board_size, model_save_path=model_save_path)
         #self.model = models[model_name](action_size , self.board_size, model_save_path=model_save_path)
         self.model = self.model_creator()
