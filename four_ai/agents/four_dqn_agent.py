@@ -8,6 +8,7 @@ from keras import backend as K
 from keras.models import model_from_json
 import os.path
 from ..utils.logger import logger
+from ..config.config import Config
 
 class BaseModel():
     def __init__(self,model_name, model_save_path):
@@ -150,7 +151,7 @@ class DQNAgent():
             self.button_color_invert = -1 # to multiple the state by this varible. meaning -1 to 1 , 1 to -1 
 
 
-        model_save_path  = '../trained_models/four_a_row'
+        model_save_path  = Config.Folder.TRAINED_FOLDER 
         if not os.path.exists(model_save_path):
             os.makedirs(model_save_path)
 

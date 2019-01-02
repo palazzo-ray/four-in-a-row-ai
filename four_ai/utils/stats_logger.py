@@ -7,13 +7,10 @@ import matplotlib.pyplot as plt
 import datetime
 from .logger import logger
 
+from ..config.config import Config
+
 matplotlib.use("Agg")
 
-#TRAINING_UPDATE_FREQUENCY = 1000
-#RUN_UPDATE_FREQUENCY = 10
-TRAINING_UPDATE_FREQUENCY = 5000
-RUN_UPDATE_FREQUENCY =  100
-MAX_LOSS = 5
 
 
 class StatsLogger:
@@ -24,11 +21,11 @@ class StatsLogger:
             shutil.rmtree(directory_path, ignore_errors=True)
         os.makedirs(directory_path)
 
-        self.score = Stat("run", "score", RUN_UPDATE_FREQUENCY, directory_path, header)
-        self.step = Stat("run", "step", RUN_UPDATE_FREQUENCY, directory_path, header)
-        self.loss = Stat("update", "loss", TRAINING_UPDATE_FREQUENCY, directory_path, header)
-        self.accuracy = Stat("update", "accuracy", TRAINING_UPDATE_FREQUENCY, directory_path, header)
-        self.q = Stat("update", "q", TRAINING_UPDATE_FREQUENCY, directory_path, header)
+        self.score = Stat("run", "score", Config.Stats.RUN_UPDATE_FREQUENCY, directory_path, header)
+        self.step = Stat("run", "step", Config.Stats.RUN_UPDATE_FREQUENCY, directory_path, header)
+        self.loss = Stat("update", "loss", Config.Stats.TRAINING_UPDATE_FREQUENCY, directory_path, header)
+        self.accuracy = Stat("update", "accuracy", Config.Stats.TRAINING_UPDATE_FREQUENCY, directory_path, header)
+        self.q = Stat("update", "q", Config.Stats.TRAINING_UPDATE_FREQUENCY, directory_path, header)
 
     def add_run(self, run):
 
@@ -46,7 +43,7 @@ class StatsLogger:
         self.accuracy.add_entry(fit, accuracy)
 
     def add_loss(self, fit, loss):
-        loss = min(MAX_LOSS, loss)  # Loss clipping for very big values that are likely to happen in the early stages of learning
+        loss = min(Config.Stats.MAX_LOSS, loss)  # Loss clipping for very big values that are likely to happen in the early stages of learning
         self.loss.add_entry(fit, loss)
 
     def add_q(self, fit, q):

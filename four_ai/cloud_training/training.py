@@ -16,15 +16,12 @@ from ..agents.four_dqn_agent import DDQNAgent
 from ..utils.stats_logger import StatsLogger
 from ..utils.logger import logger 
 
+from ..config.config import Config
 
-TARGET_NETWORK_UPDATE_FREQUENCY = 2000 
-#TARGET_NETWORK_UPDATE_FREQUENCY = 1
-MODEL_PERSISTENCE_UPDATE_FREQUENCY = 2000
-LOG_FILE_SAVING_FREQUENCY = 1000
 
 class Trainer():
     def __init__(self):
-        self.stats_logger = StatsLogger('Training' , '../trained_models/four_a_row/')
+        self.stats_logger = StatsLogger('Training' , Config.Folder.TRAINED_FOLDER )
         self.total_episode = 0
         self.fit_time = 0
 
@@ -82,18 +79,18 @@ class Trainer():
                 R += reward # accumulate reward - for display
                 
             
-            if episode_number % MODEL_PERSISTENCE_UPDATE_FREQUENCY == 0 :
+            if episode_number % Config.Trainer.MODEL_PERSISTENCE_UPDATE_FREQUENCY == 0 :
                 logger.info('Save model at trial round %s episode : %s' % ( str( trial_round) , str(episode_number) ))
                 agent.save_model()
 
-            if episode_number % TARGET_NETWORK_UPDATE_FREQUENCY == 0 :
+            if episode_number % Config.Trainer.TARGET_NETWORK_UPDATE_FREQUENCY == 0 :
                 logger.info('Update target model at trial round %s episode : %s'  % ( str( trial_round) , str(episode_number) ))
                 agent.update_target_network()
         
             self.total_episode += 1
             self.stats_logger.log_iteration(self.total_episode, R, t)
 
-            if self.total_episode % LOG_FILE_SAVING_FREQUENCY == 0:
+            if self.total_episode % Config.Trainer.LOG_FILE_SAVING_FREQUENCY == 0:
                 self.stats_logger.save_csv()
 
 
