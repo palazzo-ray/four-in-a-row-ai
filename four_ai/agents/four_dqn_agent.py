@@ -6,7 +6,7 @@ import numpy as np
 import random
 from keras import backend as K
 from keras.models import model_from_json
-from keras.layers import Conv2D, Flatten, Dense
+from keras.layers import Conv2D, Flatten, Dense, Dropout
 from keras.optimizers import RMSprop
 import os.path
 from ..utils.logger import logger
@@ -14,9 +14,10 @@ from ..config.config import Config
 
 
 class BaseModel():
-    def __init__(self, model_name, model_save_path):
+    def __init__(self, model_name, load_model, model_save_path):
         self.model_save_path = model_save_path
         self.model_name = model_name
+        self.load_model = load_model
 
     def save_model(self):
         file_name = self.model_save_path + '/' + self.model_name
@@ -84,16 +85,16 @@ class BaseModel():
 class DQNModel(BaseModel):
     model_name = 'NN_128x16'
 
-    def __init__(self, action_size, board_size, model_save_path='.'):
-        super(DQNModel, self).__init__(DQNModel.model_name, model_save_path)
+    def __init__(self, action_size, board_size, load_model, model_save_path='.'):
+        super(DQNModel, self).__init__(DQNModel.model_name, load_model, model_save_path)
 
         self.learning_rate = 0.001
         self.input_dim = np.prod(board_size)
 
         self.action_size = action_size
-        self.model = self._build_model()
 
-    def _build_model(self):
+
+    def build_model(self):
         # Neural Net for Deep-Q learning Model
         model = Sequential()
         model.add(Dense(128, input_dim=self.input_dim, activation='relu'))
@@ -139,9 +140,8 @@ class DQN_CNN_Model(BaseModel):
         self.learning_epsilon = 0.01
 
         self.action_size = action_size
-        self.model = self._build_model()
 
-    def _build_model(self):
+    def build_model(self):
         # Neural Net for Deep-Q learning Model
         model = Sequential()
         model.add(
@@ -152,8 +152,10 @@ class DQN_CNN_Model(BaseModel):
                 data_format="channels_last"))
         model.add(
             Conv2D(64, (3, 3), activation="relu", data_format="channels_last"))
+        model.add(Dropout(0.2))
         model.add(Flatten())
         model.add(Dense(128, activation="relu"))
+        model.add(Dropout(0.5))
         model.add(Dense(self.action_size, activation='linear'))
 
         self.model = model
@@ -238,6 +240,8 @@ class DQNAgent():
 
             if not model_exist:
                 logger.info('New model file will be created while learn')
+        else:
+            self.model.build_model()
 
     def add_fitting_callback(self, cb):
         self.fitting_cb = cb
