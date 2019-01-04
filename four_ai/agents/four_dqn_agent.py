@@ -14,10 +14,9 @@ from ..config.config import Config
 
 
 class BaseModel():
-    def __init__(self, model_name, load_model, model_save_path):
+    def __init__(self, model_name, model_save_path):
         self.model_save_path = model_save_path
         self.model_name = model_name
-        self.load_model = load_model
 
     def save_model(self):
         file_name = self.model_save_path + '/' + self.model_name
@@ -85,7 +84,7 @@ class BaseModel():
 class DQNModel(BaseModel):
     model_name = 'NN_128x16'
 
-    def __init__(self, action_size, board_size, load_model, model_save_path='.'):
+    def __init__(self, action_size, board_size, model_save_path='.'):
         super(DQNModel, self).__init__(DQNModel.model_name, load_model, model_save_path)
 
         self.learning_rate = 0.001
@@ -128,7 +127,7 @@ class DQN_CNN_Model(BaseModel):
     model_name = 'CNN_32x64x128'
 
     def __init__(self, action_size, board_size, model_save_path='.'):
-        super(DQN_CNN_Model, self).__init__(DQN_CNN_Model.model_name,
+        super(DQN_CNN_Model, self).__init__(DQN_CNN_Model.model_name, 
                                             model_save_path)
 
         self.learning_rate = 0.001
@@ -240,8 +239,10 @@ class DQNAgent():
 
             if not model_exist:
                 logger.info('New model file will be created while learn')
+                self.model.build_model()
         else:
             self.model.build_model()
+
 
     def add_fitting_callback(self, cb):
         self.fitting_cb = cb
@@ -371,8 +372,13 @@ class DDQNAgent(DQNAgent):
             board_size=board_size,
             action_size=action_size)
 
+
         ### create target network model
         self.target_model = self.model_creator()
+
+        logger.info('build target model')
+        self.target_model.build_model()
+
         self.update_target_network()
 
     def _get_target_state_action_value(self, next_state):

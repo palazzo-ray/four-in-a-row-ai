@@ -16,10 +16,11 @@ from ..utils.logger import logger
 
 from ..config.config import Config
 
-get_ipython().run_line_magic('matplotlib', 'notebook')
-
 
 def play():
+    from IPython import get_ipython 
+    get_ipython().run_line_magic('matplotlib', 'notebook')
+
     def showim(buffer):
         ax.imshow(buffer, interpolation='nearest', aspect='auto')
         fig.canvas.draw()
