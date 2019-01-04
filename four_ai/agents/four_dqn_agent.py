@@ -85,9 +85,9 @@ class DQNModel(BaseModel):
     model_name = 'NN_128x16'
 
     def __init__(self, action_size, board_size, model_save_path='.'):
-        super(DQNModel, self).__init__(DQNModel.model_name, load_model, model_save_path)
+        super(DQNModel, self).__init__(DQNModel.model_name, model_save_path)
 
-        self.learning_rate = 0.001
+        self.learning_rate = Config.Optimizer.LEARNING_RATE
         self.input_dim = np.prod(board_size)
 
         self.action_size = action_size
@@ -130,13 +130,13 @@ class DQN_CNN_Model(BaseModel):
         super(DQN_CNN_Model, self).__init__(DQN_CNN_Model.model_name, 
                                             model_save_path)
 
-        self.learning_rate = 0.001
         self.input_shape = (board_size[0], board_size[1], 1)
         self.input_shape_batch = (1, board_size[0], board_size[1], 1)
 
-        self.learning_rate = 0.00025
-        self.learning_rho = 0.95
-        self.learning_epsilon = 0.01
+        self.learning_rate = Config.Optimizer.LEARNING_RATE
+        self.learning_rho = Config.Optimizer.LEARNING_RHO
+
+        self.learning_epsilon = Config.Optimizer.LEARNING_EPSILON
 
         self.action_size = action_size
 
@@ -154,7 +154,7 @@ class DQN_CNN_Model(BaseModel):
         model.add(Dropout(0.2))
         model.add(Flatten())
         model.add(Dense(128, activation="relu"))
-        model.add(Dropout(0.5))
+        model.add(Dropout(0.4))
         model.add(Dense(self.action_size, activation='linear'))
 
         self.model = model
@@ -203,11 +203,12 @@ class DQNAgent():
         self.action_size = action_size
         self.save_learnt_to_file = save_learnt_to_file
 
-        self.memory = collections.deque(maxlen=2000)
-        self.gamma = 0.95  # discount rate
-        self.epsilon = 0.01  # exploration rate
-        self.epsilon_min = 0.0001
-        self.epsilon_decay = 0.9995
+        self.memory = collections.deque(maxlen=Config.Optimizer.MEMORY_SIZE)
+
+        self.gamma = Config.Explorer.GAMMA  # discount rate
+        self.epsilon = Config.Explorer.EPSILON  # exploration rate
+        self.epsilon_min = Config.Explorer.EPSILON_MIN
+        self.epsilon_decay = Config.Explorer.EPSILON_DECAY
 
         self.fitting_cb = None
 
