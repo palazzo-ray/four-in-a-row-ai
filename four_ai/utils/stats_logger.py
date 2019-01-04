@@ -77,6 +77,7 @@ class StatsLogger:
         self.loss.save_file()
         self.accuracy.save_file()
         self.q.save_file()
+        self.epsilon.save_file()
 
 
 class Stat:
