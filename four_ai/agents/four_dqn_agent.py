@@ -202,8 +202,8 @@ class DQNAgent():
 
         self.memory = collections.deque(maxlen=2000)
         self.gamma = 0.95  # discount rate
-        self.epsilon = 1.0  # exploration rate
-        self.epsilon_min = 0.30
+        self.epsilon = 0.01  # exploration rate
+        self.epsilon_min = 0.0001
         self.epsilon_decay = 0.9995
 
         self.fitting_cb = None
