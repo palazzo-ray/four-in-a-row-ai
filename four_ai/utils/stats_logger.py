@@ -30,6 +30,8 @@ class StatsLogger:
                              directory_path, header)
         self.q = Stat("update", "q", Config.Stats.TRAINING_UPDATE_FREQUENCY,
                       directory_path, header)
+        self.epsilon  = Stat("update", "epsilon", Config.Stats.TRAINING_UPDATE_FREQUENCY,
+                      directory_path, header)
 
     def add_run(self, run):
 
@@ -55,15 +57,19 @@ class StatsLogger:
     def add_q(self, fit, q):
         self.q.add_entry(fit, q)
 
+    def add_epsilon(self, fit, epsilon):
+        self.epsilon.add_entry(fit, epsilon)
+
     def log_iteration(self, episode, reward, t):
         self.add_run(episode)
         self.add_score(episode, reward)
         self.add_step(episode, t)
 
-    def log_fitting(self, fit_time, loss, accuracy, q):
+    def log_fitting(self, fit_time, loss, accuracy, q, epsilon):
         self.add_accuracy(fit_time, accuracy)
         self.add_loss(fit_time, loss)
         self.add_q(fit_time, q)
+        self.add_epsilon(fit_time, epsilon)
 
     def save_csv(self):
         self.score.save_file()

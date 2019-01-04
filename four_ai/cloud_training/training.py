@@ -37,6 +37,8 @@ class Trainer():
             
             logger.info('preparing agent')
             agent = DDQNAgent( who='player' , model_name=None, load_model=True, save_learnt_to_file=True)
+
+            self.agent = agent 
             agent.add_fitting_callback(self.fitting_callback)
             
             env = FourInARowEnv(npc_agent=npc_agent)
@@ -46,7 +48,7 @@ class Trainer():
 
     def fitting_callback(self, loss,accuracy, q):
         self.fit_time += 1
-        self.stats_logger.log_fitting(self.fit_time, loss, accuracy, q)
+        self.stats_logger.log_fitting(self.fit_time, loss, accuracy, q , self.agent.epsilon)
 
     def run_qlearning(self, trial_round, env, agent, max_number_of_episodes):
 

@@ -13,7 +13,7 @@ class BaseConfig():
         GAMMA = 0.95  # DISCOUNT RATE
         EPSILON = 0.3  # EXPLORATION RATE
         EPSILON_MIN = 0.001
-        EPSILON_DECAY = 0.999995
+        EPSILON_DECAY = 0.999999
 
     @staticmethod
     def print_info(x):
