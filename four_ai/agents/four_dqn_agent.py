@@ -204,6 +204,7 @@ class DQNAgent():
         self.save_learnt_to_file = save_learnt_to_file
 
         self.memory = collections.deque(maxlen=Config.Optimizer.MEMORY_SIZE)
+        self.important_memory = collections.deque(maxlen=Config.Optimizer.MEMORY_SIZE)
 
         self.gamma = Config.Explorer.GAMMA  # discount rate
         self.epsilon = Config.Explorer.EPSILON  # exploration rate
@@ -250,6 +251,9 @@ class DQNAgent():
 
     def _remember(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
+
+        if reward != 0 :
+            self.important_memory.append((state, action, reward, next_state, done))
 
     def _flip_state(self, state):
         board, _, _ = state
@@ -311,12 +315,25 @@ class DQNAgent():
         return state, target_f, max_q
 
     def _replay(self, done, batch_size):
+
+        from_normal = int(batch_size / 2)
+        from_important = int(batch_size / 2)
+
+        batch_size = from_important + from_normal
+
         memory_size = len(self.memory)
+        important_memory_size = len(self.important_memory)
         # if done | (memory_size >= batch_size ):
-        if (memory_size >= batch_size):
+        if (memory_size >= from_normal ) & ( important_memory_size >= from_important):
             batch_size = min(memory_size, batch_size)
 
-            minibatch = random.sample(self.memory, batch_size)
+            #minibatch = random.sample(self.memory, batch_size)
+
+            minibatch_1 = random.sample(self.memory, from_normal)
+            minibatch_2 = random.sample(self.important_memory, from_important)
+
+            minibatch = minibatch_1 + minibatch_2
+            random.shuffle(minibatch)
 
             train_x = []
             train_y = []
