@@ -25,7 +25,7 @@ class BaseConfig():
 
 class Cloud_Config(BaseConfig):
     class Trainer():
-        TARGET_NETWORK_UPDATE_FREQUENCY = 8000
+        TARGET_NETWORK_UPDATE_FREQUENCY = 7500
         MODEL_PERSISTENCE_UPDATE_FREQUENCY = 5000
         LOG_FILE_SAVING_FREQUENCY = 1000
 
