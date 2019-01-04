@@ -74,6 +74,8 @@ class BaseModel():
         accuracy = fit_result.history["acc"][0]
         return loss, accuracy
 
+    def _compile_model(self):
+        raise NotImplementedError
 
 ####################
 #
