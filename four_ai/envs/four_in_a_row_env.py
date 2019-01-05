@@ -12,19 +12,13 @@ class SuperNpcAgent():
         self.child_agent = child_agent
 
     def act(self, state):
-        action = self.child_agent.act(state)
-        return action
 
-class RandomNpcAgent():
-    def __init__(self, b_height, b_width):
-        self.b_height = b_height
-        self.b_width = b_width
-
-    def act(self, state):
-        #state = ( self.board.copy() , act_row, act_col )
-        board = state
-        action = np.random.choice(np.where(board[0, :] == 0)[0])
-
+        if self.child_agent is not None:
+            action = self.child_agent.act(state)
+        else:
+            #### random
+            board = state
+            action = np.random.choice(np.where(board[0, :] == 0)[0])
         return action
 
 
@@ -51,10 +45,7 @@ class FourInARowEnv(gym.Env):
         self.player_button = -1
         self.npc_button = 1  # npc is the one who play for the env, giving response to player
 
-        if npc_agent is not None:
-            self.npc_agent = SuperNpcAgent(self.npc_button, npc_agent)
-        else:
-            self.npc_agent = RandomNpcAgent(self.b_height, self.b_width)
+        self.npc_agent = SuperNpcAgent(self.npc_button, npc_agent)
 
         ####
         #
