@@ -16,7 +16,7 @@ class BaseConfig():
         EPSILON_DECAY_TO_MID = 0.999995
 
         EPSILON_MIN = 0.005
-        EPSILON_DECAY_TO_MIN = 0.9999995
+        EPSILON_DECAY_TO_MIN = 0.999999
 
     @staticmethod
     def print_info(x):

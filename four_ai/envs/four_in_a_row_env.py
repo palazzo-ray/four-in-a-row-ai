@@ -6,6 +6,15 @@ import random
 from ..utils.logger import logger
 
 
+class SuperNpcAgent():
+    def __init__(self, button_color, child_agent ):
+        self.button_color = button_color
+        self.child_agent = child_agent
+
+    def act(self, state):
+        action = self.child_agent.act(state)
+        return action
+
 class RandomNpcAgent():
     def __init__(self, b_height, b_width):
         self.b_height = b_height
@@ -13,7 +22,7 @@ class RandomNpcAgent():
 
     def act(self, state):
         #state = ( self.board.copy() , act_row, act_col )
-        board, _, _ = state
+        board = state
         action = np.random.choice(np.where(board[0, :] == 0)[0])
 
         return action
@@ -43,7 +52,7 @@ class FourInARowEnv(gym.Env):
         self.npc_button = 1  # npc is the one who play for the env, giving response to player
 
         if npc_agent is not None:
-            self.npc_agent = npc_agent
+            self.npc_agent = SuperNpcAgent(self.npc_button, npc_agent)
         else:
             self.npc_agent = RandomNpcAgent(self.b_height, self.b_width)
 
@@ -60,20 +69,25 @@ class FourInARowEnv(gym.Env):
         act_col = action
         done = False
 
-        done, act_row, act_col = self.player_step(act_col, self.player_button)
+        done, act_row, act_col, new_board, new_avail_row = FourInARowEnv.test_move(act_col, 
+                    self.player_button, self.avail_row, self.board, self.b_width, self.b_height, self.in_row_count)
 
-        # wrong move
-        # state no change
+        # player wrong move
         if act_row == -1:  # wrong move
             reward = -1
             done = True
-            state = (self.board.copy(), act_row, act_col)
+            self.board = new_board.copy()
+            self.avail_row = new_avail_row.copy()
+
+            state = self.board.copy()
             return state, reward, done, ''
 
         # player won
         if done:
             reward = 0.8 
-            state = (self.board.copy(), act_row, act_col)
+            self.board = new_board.copy()
+            self.avail_row = new_avail_row.copy()
+            state = self.board.copy()
             return state, reward, done, ''
 
         self.placed_button += 1
@@ -83,28 +97,41 @@ class FourInARowEnv(gym.Env):
             # no space
             reward = 0
             done = True
-            state = (self.board.copy(), act_row, act_col)
+            self.board = new_board.copy()
+            self.avail_row = new_avail_row.copy()
+            state = self.board.copy()
             return state, reward, done, ''
 
+        ## commit move
+        self.board = new_board.copy()
+        self.avail_row = new_avail_row.copy()
+
         # NPC response
-        npc_action = self.npc_agent.act((self.board, -1, -1))
-        done, act_row, _ = self.player_step(npc_action, self.npc_button)
-        # wrong move by npc
-        # state no change
+        npc_action = self.npc_agent.act(self.board)
+        done, act_row, act_col, new_board, new_avail_row = FourInARowEnv.test_move(npc_action, 
+                    self.npc_button , self.avail_row, self.board, self.b_width, self.b_height, self.in_row_count)
+
+        # wrong move by npc ,state no change
         if act_row == -1:  # wrong move
             # the npc agen made wrong move. fallback to a random and move again
             npc_action = np.random.choice(np.where(self.board[0, :] == 0)[0])
 
-            done, act_row, _ = self.player_step(npc_action, self.npc_button)
+            done, act_row, act_col, new_board, new_avail_row = FourInARowEnv.test_move(npc_action, 
+                        self.npc_button , self.avail_row, self.board, self.b_width, self.b_height, self.in_row_count)
 
         #check is npc won
         if done:
             reward = -0.8
-            state = (self.board.copy(), act_row, act_col)
+            self.board = new_board.copy()
+            self.avail_row = new_avail_row.copy()
+            state = self.board.copy()
             return state, reward, done, ''
 
         reward = -0.0015 
-        state = (self.board.copy(), act_row, act_col)
+
+        ## commit move
+        self.board = new_board.copy()
+        self.avail_row = new_avail_row.copy()
 
         self.placed_button += 1
 
@@ -115,10 +142,10 @@ class FourInARowEnv(gym.Env):
             # no space
             reward = 0 
             done = True
-            state = (self.board.copy(), act_row, act_col)
-            return state, reward, done, ''
 
+        state = self.board.copy()
         return state, reward, done, ''
+
 
     def reset(self):
         self.board = np.zeros((self.b_height, self.b_width)).astype(int)
@@ -128,21 +155,26 @@ class FourInARowEnv(gym.Env):
         self.placed_button = 0
         self.max_placed_button = (self.b_height * self.b_width)
 
-        act_row = -1
-        act_col = -1
-
         ### random, sometime npc moves first
         if np.random.rand() >= 0.5:
-            npc_action = self.npc_agent.act((self.board, -1, -1))
-            done, act_row, act_col = self.player_step(npc_action,
-                                                      self.npc_button)
-            state = (self.board.copy(), act_row, act_col)
+            npc_action = self.npc_agent.act(self.board)
+            done, act_row, act_col, new_board, new_avail_row = FourInARowEnv.test_move(npc_action, 
+                                        self.npc_button, self.avail_row , self.board , self.b_width, self.b_height, self.in_row_count)
+                                    
+            # commit move
+            self.board = new_board.copy()
+            self.avail_row = new_avail_row.copy()
+
             self.placed_button += 1
 
-            return state
-
-        state = (self.board.copy(), act_row, act_col)
+        state = self.board.copy()
         return state
+
+    def check_easy_win_move(self):
+        return None
+
+    def check_easy_loss_move(self):
+        return None
 
     def manual_step(self, action, player):
         reward = 0
@@ -167,73 +199,78 @@ class FourInARowEnv(gym.Env):
     #
     #  state transition
     #
-    def player_step(self, act_col, act_button):
+    @staticmethod
+    def test_move(act_col, act_button, cur_avail_row , cur_board , b_width, b_height, in_row_count):
+        avail_row = cur_avail_row.copy()
+        board = cur_board.copy()
+
         done = False
         # the column is full
-        if self.avail_row[act_col] == -1:
+        if avail_row[act_col] == -1:
             act_row = -1  # wrong move
-            return done, act_row, act_col
+            return done, act_row, act_col, board, avail_row
 
-        self.board[self.avail_row[act_col], act_col] = act_button
-        act_row = self.avail_row[act_col]
-        self.avail_row[act_col] -= 1
+        board[avail_row[act_col], act_col] = act_button
+        act_row = avail_row[act_col]
+        avail_row[act_col] -= 1
 
-        done = self.check_win(act_button, act_row, act_col)
-        return done, act_row, act_col
+        done = FourInARowEnv.check_win(act_button, act_row, act_col, board, b_width, b_height, in_row_count)
+        return done, act_row, act_col, board, avail_row
 
-    def check_win(self, act_button, act_row, act_col):
+    @staticmethod
+    def check_win(act_button, act_row, act_col, board, b_width, b_height, in_row_count):
         # check horizonal
-        for i in range(0, self.in_row_count):
-            if np.sum(self.board[act_row, i:i + self.in_row_count]) == (
-                    act_button * self.in_row_count):
+        for i in range(0, in_row_count):
+            if np.sum(board[act_row, i:i + in_row_count]) == (
+                    act_button * in_row_count):
                 return True
 
         # check vertical
-        for i in range(0, self.in_row_count):
-            if np.sum(self.board[i:i + self.in_row_count, act_col]) == (
-                    act_button * self.in_row_count):
+        for i in range(0, in_row_count):
+            if np.sum(board[i:i + in_row_count, act_col]) == (
+                    act_button * in_row_count):
                 return True
 
         # check diagonal
         # from bottom left to top right
-        for i in range(self.in_row_count - 1, -1, -1):
+        for i in range(in_row_count - 1, -1, -1):
             row0 = act_row + i
             col0 = act_col - i
 
-            row1 = row0 - self.in_row_count - 1
-            col1 = col0 + self.in_row_count - 1
+            row1 = row0 - in_row_count - 1
+            col1 = col0 + in_row_count - 1
 
-            if (row1 >= 0) & (row0 < self.b_height) & (col0 >= 0) & (
-                    col1 < self.b_width):
+            if (row1 >= 0) & (row0 < b_height) & (col0 >= 0) & (
+                    col1 < b_width):
                 total_b = 0
-                for j in range(self.in_row_count):
+                for j in range(in_row_count):
                     irow = row0 - j
                     icol = col0 + j
 
-                    total_b += self.board[irow, icol]
+                    total_b += board[irow, icol]
 
-                if total_b == (act_button * self.in_row_count):
+                if total_b == (act_button * in_row_count):
                     return True
 
         # check diagonal
         # from top left to bottom right
-        for i in range(self.in_row_count - 1, -1, -1):
+        for i in range(in_row_count - 1, -1, -1):
             row0 = act_row - i
             col0 = act_col - i
 
-            row1 = row0 + self.in_row_count - 1
-            col1 = col0 + self.in_row_count - 1
+            row1 = row0 + in_row_count - 1
+            col1 = col0 + in_row_count - 1
 
-            if (row0 >= 0) & (row1 < self.b_height) & (col0 >= 0) & (
-                    col1 < self.b_width):
+            if (row0 >= 0) & (row1 < b_height) & (col0 >= 0) & (
+                    col1 < b_width):
                 total_b = 0
-                for j in range(self.in_row_count):
+                for j in range(in_row_count):
                     irow = row0 + j
                     icol = col0 + j
 
-                    total_b += self.board[irow, icol]
+                    total_b += board[irow, icol]
 
-                if total_b == (act_button * self.in_row_count):
+                if total_b == (act_button * in_row_count):
                     return True
 
         return False

@@ -1,15 +1,15 @@
 
 import numpy as np
 import sys
-import plotting
+from . import plotting
 from matplotlib import pyplot as plt
 from matplotlib import pylab
 import matplotlib.gridspec as gridspec
 
-from logger import logger
+from .logger import logger
 
 class Experiment(object):
-    def __init__(self, env, agent, debug_logger.info_interval = 0):
+    def __init__(self, env, agent ):
         
         self.env = env
         self.agent = agent
@@ -54,7 +54,6 @@ class Experiment(object):
         self.line, = self.ax1.plot(range(len(self.episode_length)),self.episode_length)
         self.line2, = self.ax2.plot(range(len(self.episode_reward)),self.episode_reward)
 
-        self.debug_logger.info_interval = debug_logger.info_interval
         
     def update_display_step(self):
         if not hasattr(self, 'imgplot'):
@@ -75,44 +74,6 @@ class Experiment(object):
         
         self.fig.canvas.draw()     
         
-    def run_bandit(self, max_number_of_trials=1000, display_frequency=1):
-        self.fig.clf()
-        
-        logger.info("Distribution:", self.env.distribution, self.env.reward_parameters, flush = True)
-        logger.info("Optimal arm:", self.env.optimal_arm, flush = True)
-        
-        if self.env.distribution != "normal":
-            plotting.plot_arm_rewards(self.env.reward_parameters)
-        #else:
-            #plotting.plot_arm_rewards(self.env.reward_parameters[0])
-        
-        stats = plotting.TimestepStats(
-            cumulative_rewards=np.zeros(max_number_of_trials),
-            regrets=np.zeros(max_number_of_trials))   
-            
-        cumulative_reward = 0.0
-        cumulative_regret = 0.0
-        
-        for trial in range(max_number_of_trials):
-            action = self.agent.act()
-            
-            _ , reward, done, _ = self.env.step(action)       
-            self.agent.feedback(action, reward)
-            cumulative_reward += reward
-
-            gap = self.env.compute_gap(action)
-            if action != self.env.optimal_arm:
-                cumulative_regret += gap
-
-            stats.cumulative_rewards[trial] = cumulative_reward
-            stats.regrets[trial] = cumulative_regret
-
-        logger.info("--------------------------------------------------", flush = True)
-        logger.info("Policy:", self.agent.name, "\nAverage Reward:", cumulative_reward / max_number_of_trials, \
-                "\nAverage Regret:", cumulative_regret / max_number_of_trials, flush = True)
-        logger.info("Arm pulls:", self.agent.total_counts, flush = True)
-         
-        plotting.plot_reward_regret(stats)
         
     def run_agent(self, max_number_of_episodes=100, max_number_of_steps=100, interactive = False, display_frequency=1):
 
@@ -206,11 +167,6 @@ class Experiment(object):
             self.episode_length = np.append(self.episode_length,t) # keep episode length - for display
             self.episode_reward = np.append(self.episode_reward,R) # keep episode reward - for display 
 
-            if (self.debug_logger.info_interval != 0 ):
-                if episode_number % self.debug_logger.info_interval == 0 :
-                    logger.info('episode : ' + str(episode_number))
-                    self.agent.save_model()
-            
             # if interactive display, show update for the episode
             if interactive:
                 self.update_display_episode()

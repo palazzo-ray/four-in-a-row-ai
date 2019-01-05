@@ -250,7 +250,7 @@ class DQNAgent():
             self.important_memory.append((state, action, reward, next_state, done))
 
     def _flip_state(self, state):
-        board, _, _ = state
+        board = state
 
         board = board.copy()
 
