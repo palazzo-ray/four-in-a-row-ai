@@ -39,7 +39,7 @@ class Trainer():
             logger.info('prepare npc')
             
             npc_agent = DDQNAgent( who='npc' , model_name=None, load_model=True, save_learnt_to_file=False)
-            npc_agent.epsilon = agent.epsilon
+            npc_agent.epsilon = 0.01
             #npc_agent = None ### random response agent inside the env  
 
             env = FourInARowEnv(npc_agent=npc_agent)
@@ -62,9 +62,6 @@ class Trainer():
             R = 0 # used to display accumulated rewards for an episode
             t = 0 # used to display accumulated steps for an episode i.e episode length
 
-            ### sync epsilon between agent and npc
-            env.npc_agent.epsilon = agent.epsilon
-            
             # repeat for each step of episode, until state is terminal
             while not done:
                 

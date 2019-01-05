@@ -145,16 +145,16 @@ class DQN_CNN_Model(BaseModel):
         model = Sequential()
         model.add(
             Conv2D(
-                32, (4, 4),
+                38, (4, 4),
                 activation="relu",
                 input_shape=self.input_shape,
                 data_format="channels_last"))
         model.add(
-            Conv2D(64, (3, 3), activation="relu", data_format="channels_last"))
+            Conv2D(74, (3, 3), activation="relu", data_format="channels_last"))
         model.add(Dropout(0.2))
         model.add(Flatten())
-        model.add(Dense(128, activation="relu"))
-        model.add(Dropout(0.4))
+        model.add(Dense(158, activation="relu"))
+        model.add(Dropout(0.45))
         model.add(Dense(self.action_size, activation='linear'))
 
         self.model = model
@@ -168,19 +168,11 @@ class DQN_CNN_Model(BaseModel):
     def _compile_model(self):
         self.model.compile(
             loss="mean_squared_error",
-            optimizer=RMSprop(
-                lr=self.learning_rate,
-                rho=self.learning_rho,
-                epsilon=self.learning_epsilon),
+            optimizer=Adam(lr=self.learning_rate),
             metrics=["accuracy"])
 
         logger.info('compile model')
         self.model.summary(print_fn=logger.info)
-
-        self.model.compile(
-            loss='mse',
-            optimizer=Adam(lr=self.learning_rate),
-            metrics=["accuracy"])
 
 
 # Deep Q-learning Agent

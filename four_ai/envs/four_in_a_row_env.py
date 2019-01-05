@@ -65,14 +65,14 @@ class FourInARowEnv(gym.Env):
         # wrong move
         # state no change
         if act_row == -1:  # wrong move
-            reward = -10
+            reward = -1
             done = True
             state = (self.board.copy(), act_row, act_col)
             return state, reward, done, ''
 
         # player won
         if done:
-            reward = 1
+            reward = 0.8 
             state = (self.board.copy(), act_row, act_col)
             return state, reward, done, ''
 
@@ -99,7 +99,7 @@ class FourInARowEnv(gym.Env):
 
         #check is npc won
         if done:
-            reward = -1
+            reward = -0.8
             state = (self.board.copy(), act_row, act_col)
             return state, reward, done, ''
 

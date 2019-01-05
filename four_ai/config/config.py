@@ -3,7 +3,7 @@ from ..utils.logger import logger
 
 class BaseConfig():
     class Optimizer():
-        LEARNING_RATE = 0.00025
+        LEARNING_RATE = 0.001
         LEARNING_RHO = 0.95
         LEARNING_EPSILON = 0.01
 
@@ -11,12 +11,12 @@ class BaseConfig():
 
     class Explorer():
         GAMMA = 0.95  # DISCOUNT RATE
-        EPSILON = 0.9  # EXPLORATION RATE
-        EPSILON_MID = 0.3
-        EPSILON_DECAY_TO_MID = 0.999999
+        EPSILON = 0.4  # EXPLORATION RATE
+        EPSILON_MID = 0.2
+        EPSILON_DECAY_TO_MID = 0.99995
 
-        EPSILON_MIN = 0.001
-        EPSILON_DECAY_TO_MIN = 0.9999995
+        EPSILON_MIN = 0.005
+        EPSILON_DECAY_TO_MIN = 0.999995
 
     @staticmethod
     def print_info(x):
