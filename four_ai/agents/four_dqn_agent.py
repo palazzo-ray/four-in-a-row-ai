@@ -252,6 +252,8 @@ class DQNAgent():
     def _flip_state(self, state):
         board, _, _ = state
 
+        board = board.copy()
+
         if self.button_color_invert == -1:
             board = board * self.button_color_invert
 
