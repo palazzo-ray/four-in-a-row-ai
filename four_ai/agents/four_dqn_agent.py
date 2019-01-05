@@ -208,8 +208,10 @@ class DQNAgent():
 
         self.gamma = Config.Explorer.GAMMA  # discount rate
         self.epsilon = Config.Explorer.EPSILON  # exploration rate
+        self.epsilon_mid = Config.Explorer.EPSILON_MID
+        self.epsilon_decay_to_mid = Config.Explorer.EPSILON_DECAY_TO_MID
         self.epsilon_min = Config.Explorer.EPSILON_MIN
-        self.epsilon_decay = Config.Explorer.EPSILON_DECAY
+        self.epsilon_decay_to_min = Config.Explorer.EPSILON_DECAY_TO_MIN
 
         self.fitting_cb = None
 
@@ -357,8 +359,10 @@ class DQNAgent():
             if self.fitting_cb is not None:
                 self.fitting_cb(loss, accuracy, mean_q)
 
-            if self.epsilon > self.epsilon_min:
-                self.epsilon *= self.epsilon_decay
+            if self.epsilon > self.epsilon_mid:
+                self.epsilon *= self.epsilon_decay_to_mid
+            elif self.epsilon > self.epsilon_min:
+                self.epsilon *= self.epsilon_decay_to_min
 
     def save_model(self):
         if self.save_learnt_to_file:

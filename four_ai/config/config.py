@@ -11,9 +11,12 @@ class BaseConfig():
 
     class Explorer():
         GAMMA = 0.95  # DISCOUNT RATE
-        EPSILON = 0.3  # EXPLORATION RATE
+        EPSILON = 0.9  # EXPLORATION RATE
+        EPSILON_MID = 0.3
+        EPSILON_DECAY_TO_MID = 0.999999
+
         EPSILON_MIN = 0.001
-        EPSILON_DECAY = 0.999999
+        EPSILON_DECAY_TO_MIN = 0.9999995
 
     @staticmethod
     def print_info(x):
@@ -34,8 +37,10 @@ class BaseConfig():
 
         logger.info('Explorer.GAMMA : ' + str( x.Explorer.GAMMA ) )
         logger.info('Explorer.EPSILON : ' + str( x.Explorer.EPSILON ) )
+        logger.info('Explorer.EPSILON_MID : ' + str( x.Explorer.EPSILON_MID ) )
+        logger.info('Explorer.EPSILON_DECAY_TO_MID : ' + str( x.Explorer.EPSILON_DECAY_TO_MID ) )
         logger.info('Explorer.EPSILON_MIN : ' + str( x.Explorer.EPSILON_MIN ) )
-        logger.info('Explorer.EPSILON_DECAY : ' + str( x.Explorer.EPSILON_DECAY ) )
+        logger.info('Explorer.EPSILON_DECAY_TO_MIN : ' + str( x.Explorer.EPSILON_DECAY_TO_MIN ) )
 
         logger.info('Folder.TRAINED_FOLDER: ' + str(x.Folder.TRAINED_FOLDER))
 
