@@ -27,20 +27,21 @@ class Trainer():
 
     def training( self, num_round = 1, number_of_episodes=20):
 
+        logger.info('preparing agent')
+        agent = DDQNAgent( who='player' , model_name=None, load_model=True, save_learnt_to_file=True)
+
+        self.agent = agent 
+        agent.add_fitting_callback(self.fitting_callback)
+
         for r in range(num_round):
             logger.info('=================================================')
             logger.info('round : ' + str(r))
             logger.info('prepare npc')
             
             npc_agent = DDQNAgent( who='npc' , model_name=None, load_model=True, save_learnt_to_file=False)
+            npc_agent.epsilon = agent.epsilon
             #npc_agent = None ### random response agent inside the env  
-            
-            logger.info('preparing agent')
-            agent = DDQNAgent( who='player' , model_name=None, load_model=True, save_learnt_to_file=True)
 
-            self.agent = agent 
-            agent.add_fitting_callback(self.fitting_callback)
-            
             env = FourInARowEnv(npc_agent=npc_agent)
 
             self.run_qlearning( r, env, agent, max_number_of_episodes=number_of_episodes)
