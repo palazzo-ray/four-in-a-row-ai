@@ -10,6 +10,7 @@ class SuperNpcAgent():
     def __init__(self, button_color, child_agent ):
         self.button_color = button_color
         self.child_agent = child_agent
+    
 
     def act(self, state):
 
@@ -20,6 +21,10 @@ class SuperNpcAgent():
             board = state
             action = np.random.choice(np.where(board[0, :] == 0)[0])
         return action
+
+    ### limited pre-code AI
+    def find_easy_win():
+        None
 
 
 class FourInARowEnv(gym.Env):
@@ -101,10 +106,55 @@ class FourInARowEnv(gym.Env):
 
         return False , ''
 
+
+    def npc_find_easy_loss(self):
+
+        for player_action in range(self.b_width):
+            ## pretend player acton
+            done, act_row, act_col, new_board, new_avail_row = FourInARowEnv.test_move(player_action, 
+                        self.player_button , self.avail_row, self.board, self.b_width, self.b_height, self.in_row_count)
+            
+            if act_row == -1:  # wrong move
+                continue
+
+            # check win condition
+            if done:
+                ## player will win, npc should move here to defend
+                return True, player_action
+
+        return False, None
+
+    def npc_find_easy_win(self):
+
+        for npc_action in range(self.b_width):
+            # trial move npc button
+            done, act_row, act_col, new_board, new_avail_row = FourInARowEnv.test_move(npc_action, 
+                        self.npc_button , self.avail_row, self.board, self.b_width, self.b_height, self.in_row_count)
+            
+            if act_row == -1:  # wrong move
+                continue
+
+            # check win condition
+            if done:
+                ## win
+                return True, npc_action
+
+        return False, None
+
     def npc_step(self):
         ### npc response
-        npc_action = self.npc_agent.act(self.board)
+        #### before asking npc agent, check easy win and loss move first
+        found , npc_action = self.npc_find_easy_win()
+        if not found:
+            # no easy win move. check easy loss move 
+            found , npc_action = self.npc_find_easy_loss()
 
+            if not found:
+                # ask npc agent
+                npc_action = self.npc_agent.act(self.board)
+
+
+        ## test the move
         done, act_row, act_col, new_board, new_avail_row = FourInARowEnv.test_move(npc_action, 
                     self.npc_button , self.avail_row, self.board, self.b_width, self.b_height, self.in_row_count)
 
