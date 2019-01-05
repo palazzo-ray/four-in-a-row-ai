@@ -11,12 +11,12 @@ class BaseConfig():
 
     class Explorer():
         GAMMA = 0.95  # DISCOUNT RATE
-        EPSILON = 0.4  # EXPLORATION RATE
+        EPSILON = 0.7  # EXPLORATION RATE
         EPSILON_MID = 0.2
-        EPSILON_DECAY_TO_MID = 0.99995
+        EPSILON_DECAY_TO_MID = 0.999995
 
         EPSILON_MIN = 0.005
-        EPSILON_DECAY_TO_MIN = 0.999995
+        EPSILON_DECAY_TO_MIN = 0.9999995
 
     @staticmethod
     def print_info(x):
