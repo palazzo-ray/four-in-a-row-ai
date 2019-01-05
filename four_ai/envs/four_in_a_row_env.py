@@ -103,7 +103,7 @@ class FourInARowEnv(gym.Env):
             state = (self.board.copy(), act_row, act_col)
             return state, reward, done, ''
 
-        reward = -0.1 
+        reward = -0.0015 
         state = (self.board.copy(), act_row, act_col)
 
         self.placed_button += 1
