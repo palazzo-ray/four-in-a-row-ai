@@ -64,50 +64,56 @@ class FourInARowEnv(gym.Env):
 
         self.reset()
 
-    def step(self, action):
+    def commit_move(self, new_board, new_avail_row):
+        self.board = new_board.copy()
+        self.avail_row = new_avail_row.copy()
+        self.placed_button += 1
 
+    def finish_step(self, scenario):
+        reward_table = {
+            ### reward , done
+            'player_wrong_move' : [ -1 , True] ,
+            'player_win' : [ 0.8 , True] , 
+            'no_space' : [ 0.0 , True],
+            'npc_win' : [ -0.8 , True],  
+            'continue' : [ -0.0015 , False]  
+        }
+
+        reward = reward_table[scenario][0]
+        done = reward_table[scenario][1]
+        state = self.board.copy()
+
+        return state, reward, done, ''
+
+
+    def player_step(self,action):
         act_col = action
         done = False
 
+        ### play move
         done, act_row, act_col, new_board, new_avail_row = FourInARowEnv.test_move(act_col, 
                     self.player_button, self.avail_row, self.board, self.b_width, self.b_height, self.in_row_count)
 
+        self.commit_move(new_board, new_avail_row)
+
         # player wrong move
         if act_row == -1:  # wrong move
-            reward = -1
-            done = True
-            self.board = new_board.copy()
-            self.avail_row = new_avail_row.copy()
-
-            state = self.board.copy()
-            return state, reward, done, ''
+            return True, 'player_wrong_move'
 
         # player won
         if done:
-            reward = 0.8 
-            self.board = new_board.copy()
-            self.avail_row = new_avail_row.copy()
-            state = self.board.copy()
-            return state, reward, done, ''
-
-        self.placed_button += 1
+            return True , 'player_win'
 
         ## check no space
         if self.placed_button >= self.max_placed_button:
-            # no space
-            reward = 0
-            done = True
-            self.board = new_board.copy()
-            self.avail_row = new_avail_row.copy()
-            state = self.board.copy()
-            return state, reward, done, ''
+            return True, 'no_space'
 
-        ## commit move
-        self.board = new_board.copy()
-        self.avail_row = new_avail_row.copy()
+        return False , ''
 
-        # NPC response
+    def npc_step(self):
+        ### npc response
         npc_action = self.npc_agent.act(self.board)
+
         done, act_row, act_col, new_board, new_avail_row = FourInARowEnv.test_move(npc_action, 
                     self.npc_button , self.avail_row, self.board, self.b_width, self.b_height, self.in_row_count)
 
@@ -119,33 +125,34 @@ class FourInARowEnv(gym.Env):
             done, act_row, act_col, new_board, new_avail_row = FourInARowEnv.test_move(npc_action, 
                         self.npc_button , self.avail_row, self.board, self.b_width, self.b_height, self.in_row_count)
 
+
+        self.commit_move(new_board, new_avail_row)
+
         #check is npc won
         if done:
-            reward = -0.8
-            self.board = new_board.copy()
-            self.avail_row = new_avail_row.copy()
-            state = self.board.copy()
-            return state, reward, done, ''
-
-        reward = -0.0015 
-
-        ## commit move
-        self.board = new_board.copy()
-        self.avail_row = new_avail_row.copy()
-
-        self.placed_button += 1
+            return True, 'npc_win'
 
         ## check no space
         ##
         ##  draw game
         if self.placed_button >= self.max_placed_button:
-            # no space
-            reward = 0 
-            done = True
+            return True, 'no_space'
 
-        state = self.board.copy()
-        return state, reward, done, ''
+        return False, ''
 
+    def step(self, action):
+
+        #### player action
+        done, scenario = self.player_step(action)
+        if done:
+            return self.finish_step(scenario)
+
+        # NPC response
+        done, scenario = self.npc_step()
+        if done:
+            return self.finish_step(scenario)
+
+        return self.finish_step('continue')
 
     def reset(self):
         self.board = np.zeros((self.b_height, self.b_width)).astype(int)
