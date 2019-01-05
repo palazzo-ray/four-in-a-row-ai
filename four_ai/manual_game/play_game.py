@@ -37,14 +37,17 @@ def play():
     buffer = env.render(mode='rgb_array')
     showim(buffer)
 
+    print("select column 0-6 , or 'q' ")
     while True:
-        print("select column 0-6 , or 'q' ")
         user_action = input()
 
         if user_action == 'q':
             break
 
         state, reward, done, _ = env.step(int(user_action))
-        print('Finish : ' + str(done))
         buffer = env.render(mode='rgb_array')
         showim(buffer)
+
+        if done:
+            print('Finish : ' + str(done))
+            break
