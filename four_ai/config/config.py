@@ -13,10 +13,10 @@ class BaseConfig():
         GAMMA = 0.95  # DISCOUNT RATE
         EPSILON = 0.7  # EXPLORATION RATE
         EPSILON_MID = 0.2
-        EPSILON_DECAY_TO_MID = 0.999995
+        EPSILON_DECAY_TO_MID = 0.999996
 
-        EPSILON_MIN = 0.005
-        EPSILON_DECAY_TO_MIN = 0.999999
+        EPSILON_MIN = 0.01
+        EPSILON_DECAY_TO_MIN = 0.99999
 
     @staticmethod
     def print_info(x):
@@ -56,8 +56,8 @@ class Cloud_Config(BaseConfig):
 
 
     class Stats():
-        TRAINING_UPDATE_FREQUENCY = 500
-        RUN_UPDATE_FREQUENCY = 500
+        TRAINING_UPDATE_FREQUENCY = 100
+        RUN_UPDATE_FREQUENCY = 100
         MAX_LOSS = 1
 
     class Folder():

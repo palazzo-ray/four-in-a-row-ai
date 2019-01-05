@@ -124,7 +124,7 @@ class DQNModel(BaseModel):
 #  CNN
 #
 class DQN_CNN_Model(BaseModel):
-    model_name = 'CNN_32x64x128'
+    model_name = 'CNN_38x74x158'
 
     def __init__(self, action_size, board_size, model_save_path='.'):
         super(DQN_CNN_Model, self).__init__(DQN_CNN_Model.model_name, 
@@ -197,6 +197,7 @@ class DQNAgent():
 
         self.memory = collections.deque(maxlen=Config.Optimizer.MEMORY_SIZE)
         self.important_memory = collections.deque(maxlen=Config.Optimizer.MEMORY_SIZE)
+        self.winning_memory = collections.deque(maxlen=Config.Optimizer.MEMORY_SIZE)
 
         self.gamma = Config.Explorer.GAMMA  # discount rate
         self.epsilon = Config.Explorer.EPSILON  # exploration rate
@@ -206,6 +207,12 @@ class DQNAgent():
         self.epsilon_decay_to_min = Config.Explorer.EPSILON_DECAY_TO_MIN
 
         self.fitting_cb = None
+
+        ## sample 33% from important queue
+        self.from_normal = 11   # 44% 
+        self.from_important = 5  # 21%
+        self.from_winning_important = 8   #  33%
+        self.batch_size = self.from_important + self.from_normal + self.from_winning_important
 
         if who == 'player':
             self.button_color_invert = 1  # to multiple the state by this varible. meaning no change
@@ -246,8 +253,10 @@ class DQNAgent():
     def _remember(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
 
-        if reward != 0 :
+        if  reward < -0.2:
             self.important_memory.append((state, action, reward, next_state, done))
+        elif reward > 0.2 :
+            self.winning_memory.append((state, action, reward, next_state, done))
 
     def _flip_state(self, state):
         board = state
@@ -284,7 +293,7 @@ class DQNAgent():
         next_state = self.model.state_conversion(next_state)
 
         self._remember(state, action, reward, next_state, done)
-        self._replay(done, batch_size=16)
+        self._replay(done)
 
     def _get_target_state_action_value(self, next_state):
         predict_next_state_action_values = self.model.predict(next_state)
@@ -310,25 +319,20 @@ class DQNAgent():
 
         return state, target_f, max_q
 
-    def _replay(self, done, batch_size):
-
-        from_normal = int(batch_size / 2)
-        from_important = int(batch_size / 2)
-
-        batch_size = from_important + from_normal
+    def _replay(self, done):
 
         memory_size = len(self.memory)
         important_memory_size = len(self.important_memory)
+        winning_memory_size = len(self.winning_memory)
         # if done | (memory_size >= batch_size ):
-        if (memory_size >= from_normal ) & ( important_memory_size >= from_important):
-            batch_size = min(memory_size, batch_size)
-
+        if done & (memory_size >= self.from_normal ) & ( winning_memory_size >= self.from_winning_important) & ( important_memory_size >= self.from_important):
             #minibatch = random.sample(self.memory, batch_size)
 
-            minibatch_1 = random.sample(self.memory, from_normal)
-            minibatch_2 = random.sample(self.important_memory, from_important)
+            minibatch_1 = random.sample(self.memory, self.from_normal)
+            minibatch_2 = random.sample(self.important_memory, self.from_important)
+            minibatch_3 = random.sample(self.winning_memory, self.from_winning_important)
 
-            minibatch = minibatch_1 + minibatch_2
+            minibatch = minibatch_1 + minibatch_2 + minibatch_3
             random.shuffle(minibatch)
 
             train_x = []

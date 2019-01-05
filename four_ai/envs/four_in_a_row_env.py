@@ -22,9 +22,13 @@ class SuperNpcAgent():
             action = np.random.choice(np.where(board[0, :] == 0)[0])
         return action
 
-    ### limited pre-code AI
-    def find_easy_win():
-        None
+class RandomNpcAgent():
+    def act(self, state):
+
+        #### random
+        board = state
+        action = np.random.choice(np.where(board[0, :] == 0)[0])
+        return action
 
 
 class FourInARowEnv(gym.Env):
@@ -38,7 +42,7 @@ class FourInARowEnv(gym.Env):
         state = ( self.board.copy() , act_row, act_col )
     '''
 
-    def __init__(self, npc_agent=None):
+    def __init__(self, npc_agent=None, test_agent=False):
         self.b_width = 7
         self.b_height = 6
         self.in_row_count = 4
@@ -46,11 +50,16 @@ class FourInARowEnv(gym.Env):
         self.action_space = spaces.Discrete(7)
         self.observation_space = None
 
+        self.test_agent = test_agent
+
         ## player is the agent or anyone play against the env
         self.player_button = -1
         self.npc_button = 1  # npc is the one who play for the env, giving response to player
 
-        self.npc_agent = SuperNpcAgent(self.npc_button, npc_agent)
+        if npc_agent is None:
+            self.npc_agent = RandomNpcAgent()
+        else:
+            self.npc_agent = npc_agent
 
         ####
         #
@@ -68,11 +77,11 @@ class FourInARowEnv(gym.Env):
     def finish_step(self, scenario):
         reward_table = {
             ### reward , done
-            'player_wrong_move' : [ -1 , True] ,
-            'player_win' : [ 0.8 , True] , 
-            'no_space' : [ 0.0 , True],
-            'npc_win' : [ -0.8 , True],  
-            'continue' : [ -0.0015 , False]  
+            'player_wrong_move' : [ -1.0 , True] ,
+            'player_win' : [ 1.0 , True] , 
+            'no_space' : [ 0.6 , True],
+            'npc_win' : [ -0.77 , True],  
+            'continue' : [ -0.01 , False]  
         }
 
         reward = reward_table[scenario][0]
@@ -143,15 +152,19 @@ class FourInARowEnv(gym.Env):
 
     def npc_step(self):
         ### npc response
-        #### before asking npc agent, check easy win and loss move first
-        found , npc_action = self.npc_find_easy_win()
-        if not found:
-            # no easy win move. check easy loss move 
-            found , npc_action = self.npc_find_easy_loss()
 
+        if self.test_agent :
+            npc_action = self.npc_agent.act(self.board)
+        else:
+            #### before asking npc agent, check easy win and loss move first
+            found , npc_action = self.npc_find_easy_win()
             if not found:
-                # ask npc agent
-                npc_action = self.npc_agent.act(self.board)
+                # no easy win move. check easy loss move 
+                found , npc_action = self.npc_find_easy_loss()
+
+                if not found:
+                    # ask npc agent
+                    npc_action = self.npc_agent.act(self.board)
 
 
         ## test the move
@@ -218,11 +231,6 @@ class FourInARowEnv(gym.Env):
         state = self.board.copy()
         return state
 
-    def check_easy_win_move(self):
-        return None
-
-    def check_easy_loss_move(self):
-        return None
 
     def manual_step(self, action, player):
         reward = 0
