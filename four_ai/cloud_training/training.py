@@ -61,6 +61,9 @@ class Trainer():
             done = False # used to indicate terminal state
             R = 0 # used to display accumulated rewards for an episode
             t = 0 # used to display accumulated steps for an episode i.e episode length
+
+            ### sync epsilon between agent and npc
+            env.npc_agent.epsilon = agent.epsilon
             
             # repeat for each step of episode, until state is terminal
             while not done:
@@ -82,11 +85,11 @@ class Trainer():
                 R += reward # accumulate reward - for display
                 
             
-            if episode_number % Config.Trainer.MODEL_PERSISTENCE_UPDATE_FREQUENCY == 0 :
+            if self.total_episode % Config.Trainer.MODEL_PERSISTENCE_UPDATE_FREQUENCY == 0 :
                 logger.info('Save model at trial round %s episode : %s' % ( str( trial_round) , str(episode_number) ))
                 agent.save_model()
 
-            if episode_number % Config.Trainer.TARGET_NETWORK_UPDATE_FREQUENCY == 0 :
+            if self.total_episode % Config.Trainer.TARGET_NETWORK_UPDATE_FREQUENCY == 0 :
                 logger.info('Update target model at trial round %s episode : %s'  % ( str( trial_round) , str(episode_number) ))
                 agent.update_target_network()
         
