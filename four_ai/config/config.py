@@ -7,16 +7,28 @@ class BaseConfig():
         LEARNING_RHO = 0.95
         LEARNING_EPSILON = 0.01
 
-        MEMORY_SIZE = 20000
+        NORMAL_MEMORY_SIZE = 20000
+        WINNING_MEMORY_SIZE = 100000
+        LOSSING_MEMORY_SIZE = 100000
+        IMPORTANT_MEMORY_SIZE = 100000
+
+        BATCH_SIZE = 32
+        BATCH_NORMAL = 13 #  41%
+        BATCH_WINNING = 5  # 16%
+        BATCH_LOSSING = 3 # 9%  - lossing 
+        BATCH_IMPORTANT = 11  # 34% have more than important num of button on the board 
+
+        NUM_BUTTON_PLAYED_AS_IMPORTANT = 18 # 18 button played
+
 
     class Explorer():
         GAMMA = 0.95  # DISCOUNT RATE
-        EPSILON = 0.7  # EXPLORATION RATE
-        EPSILON_MID = 0.2
-        EPSILON_DECAY_TO_MID = 0.999996
+        EPSILON = 0.8  # EXPLORATION RATE
+        EPSILON_MID = 0.4
+        EPSILON_DECAY_TO_MID = 0.999995
 
-        EPSILON_MIN = 0.01
-        EPSILON_DECAY_TO_MIN = 0.99999
+        EPSILON_MIN = 0.08
+        EPSILON_DECAY_TO_MIN = 0.999993
 
     @staticmethod
     def print_info(x):
@@ -33,7 +45,16 @@ class BaseConfig():
         logger.info('Optimizer.LEARNING_RATE : ' + str(x.Optimizer.LEARNING_RATE ) )
         logger.info('Optimizer.LEARNING_RHO : ' + str(x.Optimizer.LEARNING_RHO ) )
         logger.info('Optimizer.LEARNING_EPSILON : ' + str(x.Optimizer.LEARNING_EPSILON) )
-        logger.info('Optimizer.MEMORY_SIZE: ' + str(x.Optimizer.MEMORY_SIZE) )
+        logger.info('Optimizer.NORMAL_MEMORY_SIZE: ' + str(x.Optimizer.NORMAL_MEMORY_SIZE) )
+        logger.info('Optimizer.WINNING_MEMORY_SIZE: ' + str(x.Optimizer.WINNING_MEMORY_SIZE) )
+        logger.info('Optimizer.LOSSING_MEMORY_SIZE: ' + str(x.Optimizer.LOSSING_MEMORY_SIZE) )
+        logger.info('Optimizer.IMPORTANT_MEMORY_SIZE: ' + str(x.Optimizer.IMPORTANT_MEMORY_SIZE) )
+
+        logger.info('Optimizer.BATCH_SIZE : ' + str(x.Optimizer.BATCH_SIZE) )
+        logger.info('Optimizer.BATCH_NORMAL : ' + str(x.Optimizer.BATCH_NORMAL ) )
+        logger.info('Optimizer.BATCH_WINNING : ' + str(x.Optimizer.BATCH_WINNING ) )
+        logger.info('Optimizer.BATCH_LOSSING : ' + str(x.Optimizer.BATCH_LOSSING ) )
+        logger.info('Optimizer.BATCH_IMPORTANT: ' + str(x.Optimizer.BATCH_IMPORTANT) )
 
         logger.info('Explorer.GAMMA : ' + str( x.Explorer.GAMMA ) )
         logger.info('Explorer.EPSILON : ' + str( x.Explorer.EPSILON ) )

@@ -195,9 +195,10 @@ class DQNAgent():
         self.action_size = action_size
         self.save_learnt_to_file = save_learnt_to_file
 
-        self.memory = collections.deque(maxlen=Config.Optimizer.MEMORY_SIZE)
-        self.important_memory = collections.deque(maxlen=Config.Optimizer.MEMORY_SIZE)
-        self.winning_memory = collections.deque(maxlen=Config.Optimizer.MEMORY_SIZE)
+        self.memory_normal  = collections.deque(maxlen=Config.Optimizer.NORMAL_MEMORY_SIZE)
+        self.memory_winning = collections.deque(maxlen=Config.Optimizer.WINNING_MEMORY_SIZE)
+        self.memory_lossing = collections.deque(maxlen=Config.Optimizer.LOSSING_MEMORY_SIZE)
+        self.memory_important = collections.deque(maxlen=Config.Optimizer.IMPORTANT_MEMORY_SIZE)
 
         self.gamma = Config.Explorer.GAMMA  # discount rate
         self.epsilon = Config.Explorer.EPSILON  # exploration rate
@@ -209,10 +210,11 @@ class DQNAgent():
         self.fitting_cb = None
 
         ## sample 33% from important queue
-        self.from_normal = 11   # 44% 
-        self.from_important = 5  # 21%
-        self.from_winning_important = 8   #  33%
-        self.batch_size = self.from_important + self.from_normal + self.from_winning_important
+        self.batch_normal = Config.Optimizer.BATCH_NORMAL
+        self.batch_winning = Config.Optimizer.BATCH_WINNING
+        self.batch_lossing = Config.Optimizer.BATCH_LOSSING
+        self.batch_important = Config.Optimizer.BATCH_IMPORTANT
+        self.batch_size = Config.Optimizer.BATCH_SIZE
 
         if who == 'player':
             self.button_color_invert = 1  # to multiple the state by this varible. meaning no change
@@ -251,12 +253,18 @@ class DQNAgent():
         self.fitting_cb = cb
 
     def _remember(self, state, action, reward, next_state, done):
-        self.memory.append((state, action, reward, next_state, done))
+        self.memory_normal.append((state, action, reward, next_state, done))
 
-        if  reward < -0.2:
-            self.important_memory.append((state, action, reward, next_state, done))
-        elif reward > 0.2 :
-            self.winning_memory.append((state, action, reward, next_state, done))
+        if  reward < -0.2:  # lossing
+            self.memory_lossing.append((state, action, reward, next_state, done))
+        elif reward > 0.2 :  # winning or no space
+            self.memory_winning.append((state, action, reward, next_state, done))
+        else:
+            num_played_button = np.count_nonzero( state )
+            if (not done) & (num_played_button >= Config.Optimizer.NUM_BUTTON_PLAYED_AS_IMPORTANT ):
+                self.memory_important.append((state, action, reward, next_state, done))
+
+
 
     def _flip_state(self, state):
         board = state
@@ -319,21 +327,34 @@ class DQNAgent():
 
         return state, target_f, max_q
 
+
+    def _check_enough_memory(self):
+        memory_normal_size = len(self.memory_normal)
+        memory_winning_size = len(self.memory_winning)
+        memory_lossing_size = len(self.memory_lossing)
+        memory_important_size = len(self.memory_important)
+
+        return (memory_normal_size>= self.batch_normal) & (memory_winning_size>= self.batch_winning) & (memory_lossing_size>= self.batch_lossing) & (memory_important_size>= self.batch_important) 
+
+    def _sample_memory(self):
+        minibatch_1 = random.sample(self.memory_normal, self.batch_normal)
+        minibatch_2 = random.sample(self.memory_winning, self.batch_winning)
+        minibatch_3 = random.sample(self.memory_lossing, self.batch_lossing)
+        minibatch_4 = random.sample(self.memory_important, self.batch_important)
+
+        minibatch = minibatch_1 + minibatch_2 + minibatch_3 + minibatch_4
+        random.shuffle(minibatch)
+
+        return minibatch
+
     def _replay(self, done):
 
-        memory_size = len(self.memory)
-        important_memory_size = len(self.important_memory)
-        winning_memory_size = len(self.winning_memory)
+        memory_enough = self._check_enough_memory()
         # if done | (memory_size >= batch_size ):
-        if done & (memory_size >= self.from_normal ) & ( winning_memory_size >= self.from_winning_important) & ( important_memory_size >= self.from_important):
+        if done & memory_enough :
             #minibatch = random.sample(self.memory, batch_size)
 
-            minibatch_1 = random.sample(self.memory, self.from_normal)
-            minibatch_2 = random.sample(self.important_memory, self.from_important)
-            minibatch_3 = random.sample(self.winning_memory, self.from_winning_important)
-
-            minibatch = minibatch_1 + minibatch_2 + minibatch_3
-            random.shuffle(minibatch)
+            minibatch = self._sample_memory()
 
             train_x = []
             train_y = []

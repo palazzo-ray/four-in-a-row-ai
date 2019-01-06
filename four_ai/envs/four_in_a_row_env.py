@@ -81,6 +81,7 @@ class FourInARowEnv(gym.Env):
             'player_win' : [ 1.0 , True] , 
             'no_space' : [ 0.6 , True],
             'npc_win' : [ -0.77 , True],  
+            'npc_wrong_move' : [ -1.0 , True],  
             'continue' : [ -0.01 , False]  
         }
 
@@ -173,11 +174,16 @@ class FourInARowEnv(gym.Env):
 
         # wrong move by npc ,state no change
         if act_row == -1:  # wrong move
-            # the npc agen made wrong move. fallback to a random and move again
-            npc_action = np.random.choice(np.where(self.board[0, :] == 0)[0])
+            if not self.test_agent:
+                # the npc agen made wrong move. fallback to a random and move again
+                npc_action = np.random.choice(np.where(self.board[0, :] == 0)[0])
 
-            done, act_row, act_col, new_board, new_avail_row = FourInARowEnv.test_move(npc_action, 
-                        self.npc_button , self.avail_row, self.board, self.b_width, self.b_height, self.in_row_count)
+                done, act_row, act_col, new_board, new_avail_row = FourInARowEnv.test_move(npc_action, 
+                            self.npc_button , self.avail_row, self.board, self.b_width, self.b_height, self.in_row_count)
+            else:
+                #npc wrong move
+                self.commit_move(new_board, new_avail_row)
+                return True, 'npc_wrong_move'
 
 
         self.commit_move(new_board, new_avail_row)
@@ -192,7 +198,7 @@ class FourInARowEnv(gym.Env):
         if self.placed_button >= self.max_placed_button:
             return True, 'no_space'
 
-        return False, ''
+        return False, 'continue'
 
     def step(self, action):
 
@@ -230,13 +236,6 @@ class FourInARowEnv(gym.Env):
 
         state = self.board.copy()
         return state
-
-
-    def manual_step(self, action, player):
-        reward = 0
-        done, act_row, act_col = self.player_step(action, player)
-        state = (self.board.copy(), act_row, act_col)
-        return state, reward, done, ''
 
     ################
     #
