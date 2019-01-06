@@ -336,7 +336,7 @@ class DQNAgent():
         memory_important_size = len(self.memory_important)
 
         is_enough = ((memory_normal_size>= self.start_training_size) and 
-                    (memory_winning_size>= self.batch_winning) and 
+                    (memory_winning_size>= self.start_training_size) and 
                     (memory_lossing_size>= self.batch_lossing) and (memory_important_size>= self.batch_important) )
 
         return is_enough

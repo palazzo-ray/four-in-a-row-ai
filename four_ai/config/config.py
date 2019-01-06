@@ -12,7 +12,7 @@ class BaseConfig():
         LOSSING_MEMORY_SIZE =   50000
         IMPORTANT_MEMORY_SIZE = 50000
 
-        START_TRAINING_SIZE = 20000
+        START_TRAINING_SIZE = 5000
         BATCH_SIZE = 32
         BATCH_NORMAL = 13 #  41%
         BATCH_WINNING = 5  # 16%
