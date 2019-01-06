@@ -210,6 +210,7 @@ class DQNAgent():
         self.fitting_cb = None
 
         ## sample 33% from important queue
+        self.start_training_size = Config.Optimizer.START_TRAINING_SIZE
         self.batch_normal = Config.Optimizer.BATCH_NORMAL
         self.batch_winning = Config.Optimizer.BATCH_WINNING
         self.batch_lossing = Config.Optimizer.BATCH_LOSSING
@@ -261,7 +262,7 @@ class DQNAgent():
             self.memory_winning.append((state, action, reward, next_state, done))
         else:
             num_played_button = np.count_nonzero( state )
-            if (not done) & (num_played_button >= Config.Optimizer.NUM_BUTTON_PLAYED_AS_IMPORTANT ):
+            if (not done) and (num_played_button >= Config.Optimizer.NUM_BUTTON_PLAYED_AS_IMPORTANT ):
                 self.memory_important.append((state, action, reward, next_state, done))
 
 
@@ -334,7 +335,11 @@ class DQNAgent():
         memory_lossing_size = len(self.memory_lossing)
         memory_important_size = len(self.memory_important)
 
-        return (memory_normal_size>= self.batch_normal) & (memory_winning_size>= self.batch_winning) & (memory_lossing_size>= self.batch_lossing) & (memory_important_size>= self.batch_important) 
+        is_enough = ((memory_normal_size>= self.start_training_size) and 
+                    (memory_winning_size>= self.batch_winning) and 
+                    (memory_lossing_size>= self.batch_lossing) and (memory_important_size>= self.batch_important) )
+
+        return is_enough
 
     def _sample_memory(self):
         minibatch_1 = random.sample(self.memory_normal, self.batch_normal)
@@ -350,8 +355,8 @@ class DQNAgent():
     def _replay(self, done):
 
         memory_enough = self._check_enough_memory()
-        # if done | (memory_size >= batch_size ):
-        if done & memory_enough :
+        # if done or (memory_size >= batch_size ):
+        if done and memory_enough :
             #minibatch = random.sample(self.memory, batch_size)
 
             minibatch = self._sample_memory()

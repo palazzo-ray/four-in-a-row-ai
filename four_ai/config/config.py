@@ -7,11 +7,12 @@ class BaseConfig():
         LEARNING_RHO = 0.95
         LEARNING_EPSILON = 0.01
 
-        NORMAL_MEMORY_SIZE = 20000
-        WINNING_MEMORY_SIZE = 100000
-        LOSSING_MEMORY_SIZE = 100000
-        IMPORTANT_MEMORY_SIZE = 100000
+        NORMAL_MEMORY_SIZE =    200000
+        WINNING_MEMORY_SIZE =   50000
+        LOSSING_MEMORY_SIZE =   50000
+        IMPORTANT_MEMORY_SIZE = 50000
 
+        START_TRAINING_SIZE = 20000
         BATCH_SIZE = 32
         BATCH_NORMAL = 13 #  41%
         BATCH_WINNING = 5  # 16%
@@ -25,10 +26,10 @@ class BaseConfig():
         GAMMA = 0.95  # DISCOUNT RATE
         EPSILON = 0.8  # EXPLORATION RATE
         EPSILON_MID = 0.4
-        EPSILON_DECAY_TO_MID = 0.999995
+        EPSILON_DECAY_TO_MID = 0.999996
 
-        EPSILON_MIN = 0.08
-        EPSILON_DECAY_TO_MIN = 0.999993
+        EPSILON_MIN = 0.12
+        EPSILON_DECAY_TO_MIN = 0.999995
 
     @staticmethod
     def print_info(x):

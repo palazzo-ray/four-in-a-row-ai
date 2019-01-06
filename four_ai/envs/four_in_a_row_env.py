@@ -46,6 +46,7 @@ class FourInARowEnv(gym.Env):
         self.b_width = 7
         self.b_height = 6
         self.in_row_count = 4
+        self.max_placed_button = (self.b_height * self.b_width)
 
         self.action_space = spaces.Discrete(7)
         self.observation_space = None
@@ -77,16 +78,33 @@ class FourInARowEnv(gym.Env):
     def finish_step(self, scenario):
         reward_table = {
             ### reward , done
-            'player_wrong_move' : [ -1.0 , True] ,
-            'player_win' : [ 1.0 , True] , 
-            'no_space' : [ 0.6 , True],
-            'npc_win' : [ -0.77 , True],  
-            'npc_wrong_move' : [ -1.0 , True],  
-            'continue' : [ -0.01 , False]  
+            'player_wrong_move' : [ -16 , 'space' , True] ,    # more space = quick wrong move,  higher neg reward
+            'player_win' : [ 15.5 , 'space', True] ,   # more space = quick win, higher reward
+            'no_space' : [ 2 , 'played' , True],
+            'npc_win' : [ -15.5 , 'space', True],     # more space = quick loss, higher neg reward
+            'npc_wrong_move' : [ +1.0 , 'space' , True],        # only in agent testing
+            'continue' : [ 1 , 'played' , False]    # more played, longer step, higher reward
         }
+        normalize_factor = 600
 
-        reward = reward_table[scenario][0]
-        done = reward_table[scenario][1]
+        done = False if scenario == 'continue' else True
+        num_played_button = np.count_nonzero( self.board )
+        num_space = self.max_placed_button - num_played_button 
+
+
+        base_reward = reward_table[scenario][0]
+        scaling_type = reward_table[scenario][1]
+        done = reward_table[scenario][2]
+
+        if scaling_type == 'space' :
+            scaling = num_space
+        elif scaling_type == 'played' :
+            scaling = num_played_button
+        else:
+            scaling = 1
+
+        reward = base_reward * scaling  / normalize_factor
+
         state = self.board.copy()
 
         return state, reward, done, ''
@@ -220,7 +238,6 @@ class FourInARowEnv(gym.Env):
             self.b_width).astype(int) * (self.b_height - 1)
         self.t = 0
         self.placed_button = 0
-        self.max_placed_button = (self.b_height * self.b_width)
 
         ### random, sometime npc moves first
         if np.random.rand() >= 0.5:
@@ -295,8 +312,7 @@ class FourInARowEnv(gym.Env):
             row1 = row0 - in_row_count - 1
             col1 = col0 + in_row_count - 1
 
-            if (row1 >= 0) & (row0 < b_height) & (col0 >= 0) & (
-                    col1 < b_width):
+            if (row1 >= 0) and (row0 < b_height) and (col0 >= 0) and ( col1 < b_width):
                 total_b = 0
                 for j in range(in_row_count):
                     irow = row0 - j
@@ -316,8 +332,7 @@ class FourInARowEnv(gym.Env):
             row1 = row0 + in_row_count - 1
             col1 = col0 + in_row_count - 1
 
-            if (row0 >= 0) & (row1 < b_height) & (col0 >= 0) & (
-                    col1 < b_width):
+            if (row0 >= 0) and (row1 < b_height) and (col0 >= 0) and ( col1 < b_width):
                 total_b = 0
                 for j in range(in_row_count):
                     irow = row0 + j
