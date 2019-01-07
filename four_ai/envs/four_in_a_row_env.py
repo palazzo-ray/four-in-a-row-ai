@@ -76,16 +76,19 @@ class FourInARowEnv(gym.Env):
         self.placed_button += 1
 
     def finish_step(self, scenario):
+        ##### this reward table only works for 7x6 board. 
+         ###  The offsets and normalize_factor need to be retuned (recal) for other board size and discount factor
         reward_table = {
             ### reward , done
-            'player_wrong_move' : [ -16 , 'space' , True] ,    # more space = quick wrong move,  higher neg reward
-            'player_win' : [ 15.5 , 'space', True] ,   # more space = quick win, higher reward
-            'no_space' : [ 2 , 'played' , True],
-            'npc_win' : [ -15.5 , 'space', True],     # more space = quick loss, higher neg reward
-            'npc_wrong_move' : [ +1.0 , 'space' , True],        # only in agent testing
-            'continue' : [ 1 , 'played' , False]    # more played, longer step, higher reward
+            'continue' : [ 0 , 'played' , 0,  False],    # more played, longer step, higher reward
+            'player_win' : [ 3 , 'space', 0.0001,  True] ,   # more space = quick win, higher reward
+            'player_wrong_move' : [ -0.1, 'space' , -100 , True] ,    # more space = quick wrong move,  higher neg reward
+            'npc_win' : [ -1 , 'space', -3, True],     # more space = quick loss, higher neg reward
+            'no_space' : [ -0.02 , 'played' , -1 ,  True],
+            'npc_wrong_move' : [ +1.0 , 'space' , 0 , True]        # only in agent testing
+
         }
-        normalize_factor = 600
+        normalize_factor = 95
 
         done = False if scenario == 'continue' else True
         num_played_button = np.count_nonzero( self.board )
@@ -94,7 +97,8 @@ class FourInARowEnv(gym.Env):
 
         base_reward = reward_table[scenario][0]
         scaling_type = reward_table[scenario][1]
-        done = reward_table[scenario][2]
+        offset = reward_table[scenario][2]
+        done = reward_table[scenario][3]
 
         if scaling_type == 'space' :
             scaling = num_space
@@ -103,11 +107,13 @@ class FourInARowEnv(gym.Env):
         else:
             scaling = 1
 
-        reward = base_reward * scaling  / normalize_factor
+        reward = ( base_reward * scaling + offset ) / normalize_factor
 
         state = self.board.copy()
 
-        return state, reward, done, ''
+        return state, reward, done, scenario 
+
+
 
 
     def player_step(self,action):
