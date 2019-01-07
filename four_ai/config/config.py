@@ -30,6 +30,9 @@ class BaseConfig():
         EPSILON_MIN = 0.12
         EPSILON_DECAY_TO_MIN = 0.999996
 
+    class Folder():
+        TRAINED_FOLDER = './training_model'
+
     @staticmethod
     def print_info(x):
         logger.info('Trainer.TARGET_NETWORK_UPDATE_FREQUENCY : ' + str(x.Trainer.TARGET_NETWORK_UPDATE_FREQUENCY))
@@ -73,15 +76,13 @@ class Cloud_Config(BaseConfig):
         LOG_FILE_SAVING_FREQUENCY = 1000
 
         NUM_OF_ROUND = 10000
-        NUM_OF_ITERATION = 100000
+        NUM_OF_ITERATION = 500000
 
     class Stats():
         TRAINING_UPDATE_FREQUENCY = 100
         RUN_UPDATE_FREQUENCY = 100
         MAX_LOSS = 1
 
-    class Folder():
-        TRAINED_FOLDER = './training_model/'
 
 
 class Test_Config(BaseConfig):
@@ -100,8 +101,6 @@ class Test_Config(BaseConfig):
         RUN_UPDATE_FREQUENCY = 1
         MAX_LOSS = 1
 
-    class Folder():
-        TRAINED_FOLDER = './training_model/'
 
 
 #Config = Test_Config

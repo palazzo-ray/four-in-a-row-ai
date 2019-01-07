@@ -14,7 +14,7 @@ matplotlib.use("Agg")
 
 class StatsLogger:
     def __init__(self, header, directory_path):
-        directory_path = directory_path
+        directory_path = directory_path + '/'
         if not os.path.exists(directory_path):
             os.makedirs(directory_path)
 
