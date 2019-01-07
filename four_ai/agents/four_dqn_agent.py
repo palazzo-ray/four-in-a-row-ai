@@ -256,9 +256,9 @@ class DQNAgent():
     def _remember(self, state, action, reward, next_state, done):
         self.memory_normal.append((state, action, reward, next_state, done))
 
-        if  reward < -0.2:  # lossing
+        if  reward < 0.0:  # lossing
             self.memory_lossing.append((state, action, reward, next_state, done))
-        elif reward > 0.2 :  # winning or no space
+        elif reward > 0.0 :  # winning or no space
             self.memory_winning.append((state, action, reward, next_state, done))
         else:
             num_played_button = np.count_nonzero( state )
