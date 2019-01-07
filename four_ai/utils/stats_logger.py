@@ -18,20 +18,18 @@ class StatsLogger:
         if not os.path.exists(directory_path):
             os.makedirs(directory_path)
 
-        self.score = Stat("run", "score", Config.Stats.RUN_UPDATE_FREQUENCY,
-                          directory_path, header)
-        self.step = Stat("run", "step", Config.Stats.RUN_UPDATE_FREQUENCY,
-                         directory_path, header)
-        self.loss = Stat("update", "loss",
-                         Config.Stats.TRAINING_UPDATE_FREQUENCY,
-                         directory_path, header)
-        self.accuracy = Stat("update", "accuracy",
-                             Config.Stats.TRAINING_UPDATE_FREQUENCY,
-                             directory_path, header)
-        self.q = Stat("update", "q", Config.Stats.TRAINING_UPDATE_FREQUENCY,
-                      directory_path, header)
-        self.epsilon  = Stat("update", "epsilon", Config.Stats.TRAINING_UPDATE_FREQUENCY,
-                      directory_path, header)
+        self.score = Stat("run", "score", Config.Stats.RUN_UPDATE_FREQUENCY, directory_path, header)
+        self.step = Stat("run", "step", Config.Stats.RUN_UPDATE_FREQUENCY, directory_path, header)
+        self.loss = Stat("update", "loss", Config.Stats.TRAINING_UPDATE_FREQUENCY, directory_path, header)
+        self.accuracy = Stat("update", "accuracy", Config.Stats.TRAINING_UPDATE_FREQUENCY, directory_path, header)
+        self.q = Stat("update", "q", Config.Stats.TRAINING_UPDATE_FREQUENCY, directory_path, header)
+        self.epsilon = Stat("update", "epsilon", Config.Stats.TRAINING_UPDATE_FREQUENCY, directory_path, header)
+
+        ### result
+        self.winning = Stat("run", "winning", Config.Stats.TRAINING_UPDATE_FREQUENCY, directory_path, header)
+        self.lossing = Stat("run", "lossing", Config.Stats.TRAINING_UPDATE_FREQUENCY, directory_path, header)
+        self.wrong_move = Stat("run", "wrong_move", Config.Stats.TRAINING_UPDATE_FREQUENCY, directory_path, header)
+        self.draw_game = Stat("run", "draw_game", Config.Stats.TRAINING_UPDATE_FREQUENCY, directory_path, header)
 
     def add_run(self, run):
 
@@ -49,9 +47,8 @@ class StatsLogger:
         self.accuracy.add_entry(fit, accuracy)
 
     def add_loss(self, fit, loss):
-        loss = min(
-            Config.Stats.MAX_LOSS, loss
-        )  # Loss clipping for very big values that are likely to happen in the early stages of learning
+        loss = min(Config.Stats.MAX_LOSS,
+                   loss)  # Loss clipping for very big values that are likely to happen in the early stages of learning
         self.loss.add_entry(fit, loss)
 
     def add_q(self, fit, q):
@@ -60,10 +57,27 @@ class StatsLogger:
     def add_epsilon(self, fit, epsilon):
         self.epsilon.add_entry(fit, epsilon)
 
-    def log_iteration(self, episode, reward, t):
+    def _add_winning(self, run, n):
+        self.winning.add_entry(run, n)
+
+    def _add_lossing(self, run, n):
+        self.lossing.add_entry(run, n)
+
+    def _add_wrong_move(self, run, n):
+        self.wrong_move.add_entry(run, n)
+
+    def _add_draw_game(self, run, n):
+        self.draw_game.add_entry(run, n)
+
+    def log_iteration(self, episode, reward, t, winning_n, lossing_n, draw_game_n, wrong_move_n):
         self.add_run(episode)
         self.add_score(episode, reward)
         self.add_step(episode, t)
+
+        self._add_winning(episode, winning_n)
+        self._add_lossing(episode, lossing_n)
+        self._add_draw_game(episode, draw_game_n)
+        self._add_wrong_move(episode, wrong_move_n)
 
     def log_fitting(self, fit_time, loss, accuracy, q, epsilon):
         self.add_accuracy(fit_time, accuracy)
@@ -78,11 +92,14 @@ class StatsLogger:
         self.accuracy.save_file()
         self.q.save_file()
         self.epsilon.save_file()
+        self.winning.save_file()
+        self.lossing.save_file()
+        self.wrong_move.save_file()
+        self.draw_game.save_file()
 
 
 class Stat:
-    def __init__(self, x_label, y_label, update_frequency, directory_path,
-                 header):
+    def __init__(self, x_label, y_label, update_frequency, directory_path, header):
         self.x_label = x_label
         self.y_label = y_label
         self.update_frequency = update_frequency
@@ -111,7 +128,7 @@ class Stat:
         self.temp_y_values.append(y_value)
         if len(self.temp_y_values) % self.update_frequency == 0:
 
-            y_values = np.array( self.temp_y_values)
+            y_values = np.array(self.temp_y_values)
 
             mean_value = np.mean(y_values)
             min_value = np.min(y_values)
@@ -121,15 +138,11 @@ class Stat:
 
             timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-            self.xy_values.append([
-                timestamp, x_value, mean_value, min_value, max_value,
-                min_count, max_count
-            ])
+            self.xy_values.append([timestamp, x_value, mean_value, min_value, max_value, min_count, max_count])
 
             self.temp_y_values = []
 
-    def _save_png(self, input_path, output_path, small_batch_length,
-                  big_batch_length, x_label, y_label):
+    def _save_png(self, input_path, output_path, small_batch_length, big_batch_length, x_label, y_label):
         x = []
         y = []
         with open(input_path, "r") as scores:
@@ -180,10 +193,7 @@ class Stat:
             scores_file = open(path, "w", newline='')
             with scores_file:
                 writer = csv.writer(scores_file)
-                writer.writerow([
-                    'Timestamp', self.x_label, 'mean', 'min', 'max',
-                    'min_count', 'max_count'
-                ])
+                writer.writerow(['Timestamp', self.x_label, 'mean', 'min', 'max', 'min_count', 'max_count'])
 
         scores_file = open(path, "a", newline='')
         with scores_file:
