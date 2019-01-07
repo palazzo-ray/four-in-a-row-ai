@@ -5,7 +5,7 @@ from keras.optimizers import Adam
 import numpy as np
 import random
 from keras import backend as K
-from keras.models import model_from_json
+import keras.models as km
 from keras.layers import Conv2D, Flatten, Dense, Dropout
 from keras.optimizers import RMSprop
 import os.path
@@ -23,41 +23,25 @@ class BaseModel():
 
         model = self.model
 
-        model_json_file = file_name + '_model.json'
-        model_weight_file = file_name + '_weight.h5'
-        # serialize model to JSON
-        model_json = model.to_json()
-        with open(model_json_file, "w") as json_file:
-            json_file.write(model_json)
-        # serialize weights to HDF5
-        model.save_weights(model_weight_file)
-        logger.info("Saved model to disk : " + str(file_name))
+        full_model_file = file_name + '_full_model.dat'
 
-    def load_model(self, loaded_model):
-        self.model = loaded_model
-        self._compile_model()
+        model.save(full_model_file)
+
+        logger.info("Saved model to disk : " + str(file_name))
 
     def load_model_from_file(self):
         file_name = self.model_save_path + '/' + self.model_name
-        model_json_file = file_name + '_model.json'
-        model_weight_file = file_name + '_weight.h5'
+        full_model_file = file_name + '_full_model.dat'
 
         # check exist
-        abs_path = os.path.abspath(str(model_json_file))
-        if not os.path.isfile(model_json_file):
-            logger.info('Model file not exist: ' + str(model_json_file))
+        abs_path = os.path.abspath(str(full_model_file))
+        if not os.path.isfile(full_model_file):
+            logger.info('Model file not exist: ' + str(full_model_file))
             logger.info('                    : ' + str(abs_path))
             return False
 
-        # load json and create model
-        json_file = open(model_json_file, 'r')
-        loaded_model_json = json_file.read()
-        json_file.close()
-        loaded_model = model_from_json(loaded_model_json)
-        # load weights into new model
-        loaded_model.load_weights(model_weight_file)
+        self.model = km.load_model(full_model_file)
 
-        self.load_model(loaded_model)
         logger.info("Loaded model from disk : " + str(file_name))
 
         return True
