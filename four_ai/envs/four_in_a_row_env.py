@@ -262,19 +262,6 @@ class FourInARowEnv(gym.Env):
 
     ################
     #
-    #  board setup
-    #
-    def init_board(self, rrg):
-        self.cell_count = rrg.cell_count
-        self.init_robots = np.array(rrg.robots)
-        self.goal = rrg.goal
-
-        self.v_chip = rrg.v_chip
-        self.h_chip = rrg.h_chip
-        self.done = False
-
-    ################
-    #
     #  state transition
     #
     @staticmethod
