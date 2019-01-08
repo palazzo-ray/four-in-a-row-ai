@@ -302,7 +302,7 @@ class FourInARowEnv(gym.Env):
             row0 = act_row + i
             col0 = act_col - i
 
-            row1 = row0 - in_row_count - 1
+            row1 = row0 - in_row_count + 1
             col1 = col0 + in_row_count - 1
 
             if (row1 >= 0) and (row0 < b_height) and (col0 >= 0) and ( col1 < b_width):

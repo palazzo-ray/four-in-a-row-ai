@@ -351,7 +351,7 @@ class DQNAgent():
             row0 = act_row + i
             col0 = act_col - i
 
-            row1 = row0 - in_row_count - 1
+            row1 = row0 - in_row_count + 1
             col1 = col0 + in_row_count - 1
 
             if (row1 >= 0) and (row0 < b_height) and (col0 >= 0) and (col1 < b_width):
@@ -392,10 +392,10 @@ class DQNAgent():
         state = self._flip_state(state)
 
         ### look for obvious win or loss situtation
-        #has_default_action , default_action = self._default_action(state)
+        has_default_action , default_action = self._default_action(state)
 
-        #if has_default_action:
-        #    return default_action
+        if has_default_action:
+            return default_action
 
         if np.random.rand() <= self.epsilon:
             action = random.randrange(self.action_size)
