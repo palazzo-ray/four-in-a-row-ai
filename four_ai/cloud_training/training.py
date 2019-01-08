@@ -51,7 +51,7 @@ class Trainer():
             logger.info('')
             logger.info('saving model backup')
             agent.save_model(backup_copy_name='agent_round_' + str(r))
-            npc.save_model(backup_copy_name='npc_round_' + str(r))
+            npc_agent.save_model(backup_copy_name='npc_round_' + str(r))
 
     def fitting_callback(self, loss, accuracy, q):
         self.fit_time += 1

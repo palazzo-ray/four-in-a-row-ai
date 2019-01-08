@@ -285,13 +285,13 @@ class FourInARowEnv(gym.Env):
     @staticmethod
     def check_win(act_button, act_row, act_col, board, b_width, b_height, in_row_count):
         # check horizonal
-        for i in range(0, in_row_count):
+        for i in range(0, b_width - in_row_count + 1):
             if np.sum(board[act_row, i:i + in_row_count]) == (
                     act_button * in_row_count):
                 return True
 
         # check vertical
-        for i in range(0, in_row_count):
+        for i in range(0, b_height-in_row_count+1):
             if np.sum(board[i:i + in_row_count, act_col]) == (
                     act_button * in_row_count):
                 return True

@@ -192,6 +192,8 @@ class DQNAgent():
         self.batch_lossing = Config.Optimizer.BATCH_LOSSING
         self.batch_important = Config.Optimizer.BATCH_IMPORTANT
         self.batch_size = Config.Optimizer.BATCH_SIZE
+        self.my_button = -1
+        self.opponent_button = 1 
 
         if who == 'player':
             self.button_color_invert = 1  # to multiple the state by this varible. meaning no change
@@ -247,13 +249,160 @@ class DQNAgent():
 
         return board
 
+    def _find_easy_loss(self, others_button, b_width, b_height, board, avail_row, in_row_count):
+
+        for others_action in range(b_width):
+            ## pretend player acton
+            done, act_row, act_col, new_board, new_avail_row = self._test_move(others_action, 
+                        others_button, avail_row, board, b_width, b_height, in_row_count)
+            
+            if act_row == -1:  # wrong move
+                continue
+
+            # check win condition
+            if done:
+                ## player will win, npc should move here to defend
+                return True, others_action 
+
+        return False, None
+
+    def _find_easy_win(self, my_button, b_width, b_height, board, avail_row, in_row_count):
+
+        for my_action in range(b_width):
+            # trial move npc button
+            done, act_row, act_col, new_board, new_avail_row = self._test_move(my_action, 
+                        my_button , avail_row, board, b_width, b_height, in_row_count)
+            
+            if act_row == -1:  # wrong move
+                continue
+
+            # check win condition
+            if done:
+                ## win
+                return True, my_action 
+
+        return False, None
+
+    def _get_avail_row(self,board, b_width, b_height):
+
+        def find_avail( column, b_height ):
+            for index in range( b_height -1, -1 , -1 ):
+                element = column[index]
+                if element == 0:
+                    return index
+
+            return -1
+
+        avail_row = np.zeros( b_width ).astype(int)
+        for i in range(0, b_width ):
+            avail_row[i] = find_avail(board[:,i] , b_height )
+
+        return avail_row
+
+    def _default_action(self, state):
+        b_height= self.board_size[0]
+        b_width = self.board_size[1]
+        in_row_count = 4
+        cur_board = state
+        avail_row = self._get_avail_row(cur_board, b_width, b_height)
+        
+        found , action = self._find_easy_win(self.my_button, b_width, b_height, cur_board, avail_row, in_row_count)
+        if found:
+            return found, action
+
+        found , action = self._find_easy_loss(self.opponent_button , b_width, b_height, cur_board, avail_row, in_row_count)
+        if found:
+            return found, action
+
+
+        return False, None
+
+    def _test_move(self, act_col, act_button, cur_avail_row , cur_board , b_width, b_height, in_row_count):
+        avail_row = cur_avail_row.copy()
+        board = cur_board.copy()
+
+        done = False
+        # the column is full
+        if avail_row[act_col] == -1:
+            act_row = -1  # wrong move
+            return done, act_row, act_col, board, avail_row
+
+        board[avail_row[act_col], act_col] = act_button
+        act_row = avail_row[act_col]
+        avail_row[act_col] -= 1
+
+        done = self._check_win(act_button, act_row, act_col, board, b_width, b_height, in_row_count)
+        return done, act_row, act_col, board, avail_row
+
+    def _check_win(self, act_button, act_row, act_col, board, b_width, b_height, in_row_count):
+        # check horizonal
+        for i in range(0, b_width - in_row_count + 1):
+            if np.sum(board[act_row, i:i + in_row_count]) == (
+                    act_button * in_row_count):
+                return True
+
+        # check vertical
+        for i in range(0, b_height-in_row_count+1):
+            if np.sum(board[i:i + in_row_count, act_col]) == (
+                    act_button * in_row_count):
+                return True
+
+        # check diagonal
+        # from bottom left to top right
+        for i in range(in_row_count - 1, -1, -1):
+            row0 = act_row + i
+            col0 = act_col - i
+
+            row1 = row0 - in_row_count - 1
+            col1 = col0 + in_row_count - 1
+
+            if (row1 >= 0) and (row0 < b_height) and (col0 >= 0) and ( col1 < b_width):
+                total_b = 0
+                for j in range(in_row_count):
+                    irow = row0 - j
+                    icol = col0 + j
+
+                    total_b += board[irow, icol]
+
+                if total_b == (act_button * in_row_count):
+                    return True
+
+        # check diagonal
+        # from top left to bottom right
+        for i in range(in_row_count - 1, -1, -1):
+            row0 = act_row - i
+            col0 = act_col - i
+
+            row1 = row0 + in_row_count - 1
+            col1 = col0 + in_row_count - 1
+
+            if (row0 >= 0) and (row1 < b_height) and (col0 >= 0) and ( col1 < b_width):
+                total_b = 0
+                for j in range(in_row_count):
+                    irow = row0 + j
+                    icol = col0 + j
+
+                    total_b += board[irow, icol]
+
+                if total_b == (act_button * in_row_count):
+                    return True
+
+        return False
     def act(self, state):
+
+        state = self._flip_state(state)
+
+        ### look for obvious win or loss situtation
+        has_default_action , default_action = self._default_action(state)
+
+        if has_default_action:
+            return default_action
+
         if np.random.rand() <= self.epsilon:
             action = random.randrange(self.action_size)
             return action
 
         #state = ( self.board.copy() , act_row, act_col )
-        state = self._flip_state(state)
         state = self.model.state_conversion(state)
         act_values = self.model.predict(state)
 
