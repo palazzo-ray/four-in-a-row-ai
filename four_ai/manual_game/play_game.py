@@ -18,7 +18,7 @@ from ..config.config import Config
 
 
 def play():
-    from IPython import get_ipython 
+    from IPython import get_ipython
     get_ipython().run_line_magic('matplotlib', 'notebook')
 
     def showim(buffer):
@@ -31,7 +31,7 @@ def play():
     npc_agent.epsilon_min = 0
     #npc_agent = None ### random response agent inside the env
 
-    env = FourInARowEnv(npc_agent=npc_agent)
+    env = FourInARowEnv(npc_agent=npc_agent, test_agent=True)
 
     env.reset()
     buffer = env.render(mode='rgb_array')
@@ -44,10 +44,10 @@ def play():
         if user_action == 'q':
             break
 
-        state, reward, done, _ = env.step(int(user_action))
+        state, reward, done, comment = env.step(int(user_action))
         buffer = env.render(mode='rgb_array')
         showim(buffer)
 
         if done:
-            print('Finish : ' + str(done))
+            print('Finish : ' + str(done) + '     ' + str(comment))
             break

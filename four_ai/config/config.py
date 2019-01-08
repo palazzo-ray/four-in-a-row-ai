@@ -7,10 +7,10 @@ class BaseConfig():
         LEARNING_RHO = 0.95
         LEARNING_EPSILON = 0.01
 
-        NORMAL_MEMORY_SIZE = 200000
-        WINNING_MEMORY_SIZE = 50000
-        LOSSING_MEMORY_SIZE = 50000
-        IMPORTANT_MEMORY_SIZE = 50000
+        NORMAL_MEMORY_SIZE = 5000
+        WINNING_MEMORY_SIZE = 100
+        LOSSING_MEMORY_SIZE = 100
+        IMPORTANT_MEMORY_SIZE = 2000
 
         START_TRAINING_SIZE = 80
         BATCH_SIZE = 32
@@ -23,8 +23,8 @@ class BaseConfig():
 
     class Explorer():
         GAMMA = 0.95  # DISCOUNT RATE
-        EPSILON = 0.8  # EXPLORATION RATE
-        EPSILON_MID = 0.4
+        EPSILON = 0.4  # EXPLORATION RATE
+        EPSILON_MID = 0.2
         EPSILON_DECAY_TO_MID = 0.999997
 
         EPSILON_MIN = 0.12
@@ -76,13 +76,12 @@ class Cloud_Config(BaseConfig):
         LOG_FILE_SAVING_FREQUENCY = 1000
 
         NUM_OF_ROUND = 10000
-        NUM_OF_ITERATION = 500000
+        NUM_OF_ITERATION = 200000
 
     class Stats():
         TRAINING_UPDATE_FREQUENCY = 100
         RUN_UPDATE_FREQUENCY = 100
         MAX_LOSS = 1
-
 
 
 class Test_Config(BaseConfig):
@@ -100,7 +99,6 @@ class Test_Config(BaseConfig):
         TRAINING_UPDATE_FREQUENCY = 1
         RUN_UPDATE_FREQUENCY = 1
         MAX_LOSS = 1
-
 
 
 #Config = Test_Config
