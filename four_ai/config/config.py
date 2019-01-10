@@ -8,24 +8,28 @@ class BaseConfig():
         LEARNING_EPSILON = 0.01
 
         NORMAL_MEMORY_SIZE = 5000
-        WINNING_MEMORY_SIZE = 100
-        LOSSING_MEMORY_SIZE = 100
-        IMPORTANT_MEMORY_SIZE = 2000
+        WINNING_MEMORY_SIZE = 1000
+        LOSSING_MEMORY_SIZE = 1000
+        IMPORTANT_MEMORY_SIZE = 1000
 
-        START_TRAINING_SIZE = 80
+        MULTI_MEMORY_QUEUE = False
+
+        START_TRAINING_SIZE = 2000
         BATCH_SIZE = 32
-        BATCH_NORMAL = 13  #  41%
+        BATCH_NORMAL = 237  #  41%
         BATCH_WINNING = 5  # 16%
         BATCH_LOSSING = 3  # 9%  - lossing
         BATCH_IMPORTANT = 11  # 34% have more than important num of button on the board
+
+        TENSORBOARD_UPDATE_FREQUENCY = 1000
 
         NUM_BUTTON_PLAYED_AS_IMPORTANT = 15  # 15 button played
 
     class Explorer():
         GAMMA = 0.95  # DISCOUNT RATE
-        EPSILON = 0.4  # EXPLORATION RATE
+        EPSILON = 0.75  # EXPLORATION RATE
         EPSILON_MID = 0.2
-        EPSILON_DECAY_TO_MID = 0.999997
+        EPSILON_DECAY_TO_MID = 0.9999993
 
         EPSILON_MIN = 0.12
         EPSILON_DECAY_TO_MIN = 0.999996
@@ -76,7 +80,7 @@ class Cloud_Config(BaseConfig):
         LOG_FILE_SAVING_FREQUENCY = 1000
 
         NUM_OF_ROUND = 10000
-        NUM_OF_ITERATION = 200000
+        NUM_OF_ITERATION = 100000
 
     class Stats():
         TRAINING_UPDATE_FREQUENCY = 100
