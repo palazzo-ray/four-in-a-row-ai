@@ -6,17 +6,22 @@ import numpy as np
 import random
 from keras import backend as K
 import keras.models as km
-from keras.layers import Conv2D, Flatten, Dense, Dropout
+from keras.layers import Conv2D, Flatten, Dense, Dropout, BatchNormalization, Activation, LeakyReLU
 from keras.optimizers import RMSprop
+from keras.callbacks import TensorBoard
 import os.path
 from ..utils.logger import logger
 from ..config.config import Config
 
 
 class BaseModel():
-    def __init__(self, model_name, model_save_path):
+    def __init__(self, model_name, my_button, opponent_button, model_save_path):
         self.model_save_path = model_save_path
         self.model_name = model_name
+
+        self.my_button = my_button
+        self.opponent_button = opponent_button
+        self.fit_count = 0
 
     def save_model_backup_copy(self, backup_name):
         file_name = self.model_save_path + '/' + self.model_name
@@ -62,11 +67,19 @@ class BaseModel():
 
         return act_values
 
-    def fit(self, batch_x, batch_y, epochs=1, verbose=0):
+    def fit(self, batch_x, batch_y, tbCallback, epochs=1, verbose=0):
+
         fit_result = self.model.fit(batch_x, batch_y, epochs=1, verbose=0)
+
+        #if self.fit_count % Config.Optimizer.TENSORBOARD_UPDATE_FREQUENCY == 0:
+        #    fit_result = self.model.fit(batch_x, batch_y, epochs=1, verbose=0, callbacks=[tbCallback])
+        #    self.fit_count = 0
+        #else:
+        #    fit_result = self.model.fit(batch_x, batch_y, epochs=1, verbose=0)
 
         loss = fit_result.history["loss"][0]
         accuracy = fit_result.history["acc"][0]
+        self.fit_count += 1
         return loss, accuracy
 
     def _compile_model(self):
@@ -80,8 +93,11 @@ class BaseModel():
 class DQNModel(BaseModel):
     model_name = 'NN_128x16'
 
-    def __init__(self, action_size, board_size, model_save_path='.'):
+    def __init__(self, action_size, board_size, my_button, opponent_button, model_save_path='.'):
         super(DQNModel, self).__init__(DQNModel.model_name, model_save_path)
+
+        self.my_button = my_button
+        self.opponent_button = opponent_button
 
         self.learning_rate = Config.Optimizer.LEARNING_RATE
         self.input_dim = np.prod(board_size)
@@ -106,9 +122,10 @@ class DQNModel(BaseModel):
         self.model.summary(print_fn=logger.info)
 
     def state_conversion(self, state):
-        state = state.reshape([1, self.input_dim])
+        ## extract different buttons into seperate feature plans then stack
 
-        return state
+        raise NotImplementedError
+
 
 
 #######################
@@ -116,13 +133,14 @@ class DQNModel(BaseModel):
 #  CNN
 #
 class DQN_CNN_Model(BaseModel):
-    model_name = 'CNN_38x74x158'
+    model_name = 'CNN'
 
-    def __init__(self, action_size, board_size, model_save_path='.'):
-        super(DQN_CNN_Model, self).__init__(DQN_CNN_Model.model_name, model_save_path)
+    def __init__(self, action_size, board_size, my_button, opponent_button, model_save_path='.'):
+        super(DQN_CNN_Model, self).__init__(DQN_CNN_Model.model_name, my_button, opponent_button, model_save_path)
 
-        self.input_shape = (board_size[0], board_size[1], 1)
-        self.input_shape_batch = (1, board_size[0], board_size[1], 1)
+        # two feature plans. one for board of my button, one for board of opponent's button
+        self.input_shape = (2, board_size[0], board_size[1])
+        self.input_shape_batch = (1, 2, board_size[0], board_size[1])
 
         self.learning_rate = Config.Optimizer.LEARNING_RATE
         self.learning_rho = Config.Optimizer.LEARNING_RHO
@@ -134,13 +152,32 @@ class DQN_CNN_Model(BaseModel):
     def build_model(self):
         # Neural Net for Deep-Q learning Model
         model = Sequential()
-        model.add(Conv2D(64, (3, 3), activation="relu", input_shape=self.input_shape, data_format="channels_last"))
-        model.add(Conv2D(128, (3, 3), activation="relu", data_format="channels_last"))
-        model.add(Dropout(0.2))
+        #model.add(Conv2D(128, (2, 2), activation='relu' , input_shape=self.input_shape, data_format="channels_first"))
+        model.add(Conv2D(128, (2, 2), activation='relu' , input_shape=self.input_shape, data_format="channels_first"))
+        #model.add(BatchNormalization())
+        #model.add(Activation('relu'))
+
+        #model.add(Conv2D(128, (2, 2),  activation='relu', data_format="channels_first"))
+        model.add(Conv2D(128, (2, 2),  activation='relu', data_format="channels_first"))
+        #model.add(LeakyReLU())
+        #model.add(BatchNormalization())
+        #model.add(Activation('relu'))
+
+        model.add(Conv2D(192, (2, 2),  activation='relu', data_format="channels_first"))
+        #model.add(LeakyReLU())
+        #model.add(BatchNormalization())
+        #model.add(Activation('relu'))
+
+        #model.add(Conv2D(192, (2, 2),  data_format="channels_last"))
+        #model.add(BatchNormalization())
+        #model.add(Activation('relu'))
+
         model.add(Flatten())
-        model.add(Dense(256, activation="relu"))
-        model.add(Dense(64, activation="relu"))
-        model.add(Dropout(0.5))
+
+        model.add(Dense(256))
+        #model.add(BatchNormalization())
+        model.add(LeakyReLU())
+
         model.add(Dense(self.action_size, activation='linear'))
 
         self.model = model
@@ -148,8 +185,13 @@ class DQN_CNN_Model(BaseModel):
         return model
 
     def state_conversion(self, state):
-        state = state.reshape(self.input_shape_batch)
-        return state
+        my_button = ((state == self.my_button) * 1)
+        opponent_button = ((state == self.opponent_button) * 1)
+
+        feature = np.stack([my_button, opponent_button])
+        feature = feature.reshape(self.input_shape_batch)
+
+        return feature
 
     def _compile_model(self):
         self.model.compile(loss="mean_squared_error", optimizer=Adam(lr=self.learning_rate), metrics=["accuracy"])
@@ -195,12 +237,16 @@ class DQNAgent():
         self.batch_size = Config.Optimizer.BATCH_SIZE
         self.my_button = -1
         self.opponent_button = 1
+        self.tbCallback = TensorBoard(log_dir='./Graph', histogram_freq=0,  
+            write_graph=False, write_images=False, write_grads=True)
 
         if who == 'player':
             self.button_color_invert = 1  # to multiple the state by this varible. meaning no change
         else:
             # who == 'npc'
             self.button_color_invert = -1  # to multiple the state by this varible. meaning -1 to 1 , 1 to -1
+
+        self.who_am_i = who
 
         model_save_path = Config.Folder.TRAINED_FOLDER
         if not os.path.exists(model_save_path):
@@ -211,7 +257,7 @@ class DQNAgent():
         if model_name is None:
             model_name = DQN_CNN_Model.model_name
 
-        self.model_creator = lambda: models[model_name](action_size, self.board_size, model_save_path=model_save_path)
+        self.model_creator = lambda: models[model_name](action_size, self.board_size, self.my_button , self.opponent_button, model_save_path=model_save_path)
         #self.model = models[model_name](action_size , self.board_size, model_save_path=model_save_path)
         self.model = self.model_creator()
 
@@ -228,17 +274,18 @@ class DQNAgent():
     def add_fitting_callback(self, cb):
         self.fitting_cb = cb
 
-    def _remember(self, state, action, reward, next_state, done):
+    def _remember(self, state, action, reward, next_state, done, scn):
         self.memory_normal.append((state, action, reward, next_state, done))
 
-        if reward < 0.0:  # lossing
-            self.memory_lossing.append((state, action, reward, next_state, done))
-        elif reward > 0.0:  # winning or no space
-            self.memory_winning.append((state, action, reward, next_state, done))
-        else:
-            num_played_button = np.count_nonzero(state)
-            if (not done) and (num_played_button >= Config.Optimizer.NUM_BUTTON_PLAYED_AS_IMPORTANT):
+        if Config.Optimizer.MULTI_MEMORY_QUEUE:
+            # special queue for wrong move
+            if done and (scn == 'player_wrong_move'):
                 self.memory_important.append((state, action, reward, next_state, done))
+
+            if reward < 0.0:  # lossing
+                self.memory_lossing.append((state, action, reward, next_state, done))
+            elif reward > 0.0:  # winning or no space
+                self.memory_winning.append((state, action, reward, next_state, done))
 
     def _flip_state(self, state):
         board = state
@@ -392,7 +439,7 @@ class DQNAgent():
         state = self._flip_state(state)
 
         ### look for obvious win or loss situtation
-        has_default_action , default_action = self._default_action(state)
+        has_default_action, default_action = self._default_action(state)
 
         if has_default_action:
             return default_action
@@ -408,7 +455,7 @@ class DQNAgent():
 
         return action
 
-    def learn(self, state, action, reward, next_state, done):
+    def learn(self, state, action, reward, next_state, done, scn):
         #logger.info('state')
         #logger.info(state)
         #logger.info('next state')
@@ -418,7 +465,7 @@ class DQNAgent():
         next_state = self._flip_state(next_state)
         next_state = self.model.state_conversion(next_state)
 
-        self._remember(state, action, reward, next_state, done)
+        self._remember(state, action, reward, next_state, done, scn)
         self._replay(done)
 
     def _get_target_state_action_value(self, next_state):
@@ -444,26 +491,34 @@ class DQNAgent():
         return state, target_f, max_q
 
     def _check_enough_memory(self):
-        memory_normal_size = len(self.memory_normal)
-        memory_winning_size = len(self.memory_winning)
-        memory_lossing_size = len(self.memory_lossing)
-        memory_important_size = len(self.memory_important)
 
-        is_enough = ((memory_normal_size >= self.start_training_size)
-                     and (memory_winning_size >= self.start_training_size)
-                     and (memory_lossing_size >= self.batch_lossing)
-                     and (memory_important_size >= self.batch_important))
+        if Config.Optimizer.MULTI_MEMORY_QUEUE:
+            memory_normal_size = len(self.memory_normal)
+            memory_winning_size = len(self.memory_winning)
+            memory_lossing_size = len(self.memory_lossing)
+            memory_important_size = len(self.memory_important)
+
+            is_enough = ((memory_normal_size >= self.start_training_size)
+                         and (memory_winning_size >= self.start_training_size)
+                         and (memory_lossing_size >= self.batch_lossing)
+                         and (memory_important_size >= self.batch_important))
+        else:
+            memory_normal_size = len(self.memory_normal)
+            is_enough = (memory_normal_size >= self.start_training_size)
 
         return is_enough
 
     def _sample_memory(self):
-        minibatch_1 = random.sample(self.memory_normal, self.batch_normal)
-        minibatch_2 = random.sample(self.memory_winning, self.batch_winning)
-        minibatch_3 = random.sample(self.memory_lossing, self.batch_lossing)
-        minibatch_4 = random.sample(self.memory_important, self.batch_important)
+        if Config.Optimizer.MULTI_MEMORY_QUEUE:
+            minibatch_1 = random.sample(self.memory_normal, self.batch_normal)
+            minibatch_2 = random.sample(self.memory_winning, self.batch_winning)
+            minibatch_3 = random.sample(self.memory_lossing, self.batch_lossing)
+            minibatch_4 = random.sample(self.memory_important, self.batch_important)
 
-        minibatch = minibatch_1 + minibatch_2 + minibatch_3 + minibatch_4
-        random.shuffle(minibatch)
+            minibatch = minibatch_1 + minibatch_2 + minibatch_3 + minibatch_4
+            random.shuffle(minibatch)
+        else:
+            minibatch = random.sample(self.memory_normal, self.batch_size)
 
         return minibatch
 
@@ -490,7 +545,7 @@ class DQNAgent():
             batch_y = np.concatenate(train_y)
 
             #self.model.fit(x, y, epochs=1, verbose=0)
-            loss, accuracy = self.model.fit(batch_x, batch_y, epochs=1, verbose=0)
+            loss, accuracy = self.model.fit(batch_x, batch_y, self.tbCallback, epochs=1, verbose=0)
             mean_q = np.mean(max_q)
 
             if self.fitting_cb is not None:
