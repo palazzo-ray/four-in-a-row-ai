@@ -27,22 +27,33 @@ class Trainer():
         self.draw_game = 0
         self.wrong_move = 0
 
+        self.round_win = 0
+
+    def get_npc(self):
+        logger.info('prepare npc')
+        npc_agent = DDQNAgent(who='npc', model_name=None, load_model=True, save_learnt_to_file=False)
+        npc_agent.epsilon = 0.3
+
+        return npc_agent
+
     def training(self, num_round=1, number_of_episodes=20):
+
+        round_winning_rate = 0
+        npc_agent = self.get_npc()
+
+        logger.info('preparing agent')
+        agent = DDQNAgent(who='player', model_name=None, load_model=True, save_learnt_to_file=True)
+        self.agent = agent
+        agent.add_fitting_callback(self.fitting_callback)
 
         for r in range(num_round):
             logger.info('=================================================')
             logger.info('round : ' + str(r))
-            logger.info('prepare npc')
 
-            logger.info('preparing agent')
-            agent = DDQNAgent(who='player', model_name=None, load_model=True, save_learnt_to_file=True)
 
-            self.agent = agent
-            agent.add_fitting_callback(self.fitting_callback)
-
-            npc_agent = DDQNAgent(who='npc', model_name=None, load_model=True, save_learnt_to_file=False)
-            npc_agent.epsilon = 0.3
-            #npc_agent = None ### random response agent inside the env
+            if round_winning_rate > 0.51:
+                logger.info('upgrade npc agent')
+                npc_agent = self.get_npc()
 
             env = FourInARowEnv(npc_agent=npc_agent)
 
@@ -53,6 +64,10 @@ class Trainer():
             agent.save_model(backup_copy_name='agent_round_' + str(r))
             npc_agent.save_model(backup_copy_name='npc_round_' + str(r))
 
+            round_winning_rate = (self.round_win / num_round)
+            logger.info('Round winning rate : ' + str(number_of_episodes))
+            self.round_win = 0
+
     def fitting_callback(self, loss, accuracy, q):
         self.fit_time += 1
         self.stats_logger.log_fitting(self.fit_time, loss, accuracy, q, self.agent.epsilon)
@@ -60,6 +75,7 @@ class Trainer():
     def _update_game_result(self, scn):
         if scn == 'player_win':
             self.winning += 1
+            self.round_win += 1
         elif scn == 'npc_win':
             self.lossing += 1
         elif scn == 'player_wrong_move':
@@ -91,7 +107,7 @@ class Trainer():
                 next_state, reward, done, scn = env.step(action)
 
                 # agent learn (Q-Learning update)
-                agent.learn(state, action, reward, next_state, done)
+                agent.learn(state, action, reward, next_state, done, scn)
 
                 # state <- next state
                 state = next_state
