@@ -401,4 +401,4 @@ class DDQNAgent(DQNAgent):
         return predict_next_state_action_values
 
     def update_target_network(self):
-        self.target_model.model.set_weights(self.model.model.get_weights())
+        self.target_model.update_weights(self.model)

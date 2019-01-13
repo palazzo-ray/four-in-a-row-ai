@@ -60,6 +60,9 @@ class DQN_CNN_Model(BaseModel):
 
         logger.info("Saved model to disk : " + str(file_name))
 
+    def update_weights(self, model):
+        self.model.set_weights(model.model.get_weights())
+
     def build_model(self):
         # Neural Net for Deep-Q learning Model
         model = Sequential()

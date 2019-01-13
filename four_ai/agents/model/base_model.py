@@ -8,6 +8,9 @@ class BaseModel():
         self.opponent_button = opponent_button
         self.fit_count = 0
 
+    def build_model(self):
+        raise NotImplementedError
+
     def save_model_backup_copy(self, backup_name):
         raise NotImplementedError
 
@@ -21,6 +24,9 @@ class BaseModel():
         raise NotImplementedError
 
     def fit(self, batch_x, batch_y, epochs=1, verbose=0):
+        raise NotImplementedError
+
+    def update_weights(self, model):
         raise NotImplementedError
 
     def _compile_model(self):
