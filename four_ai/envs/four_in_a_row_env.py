@@ -123,7 +123,7 @@ class FourInARowEnv(gym.Env):
             ### scaling_type == FourInARowEnv.REWARD_SCALER_PLAYED
             scaling = num_played_button
 
-        reward = ( base_reward * scaling + offset ) / NORMALIZE_FACTOR
+        reward = ( base_reward * scaling + offset ) / FourInARowEnv.NORMALIZE_FACTOR
 
         state = self.board.copy()
 
