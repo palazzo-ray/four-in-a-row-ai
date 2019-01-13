@@ -4,7 +4,7 @@ import random
 import os.path
 from ..utils.logger import logger
 from ..config.config import Config
-from .model.agent_model import DQN_CNN_Model
+from .model.keras_model import DQN_CNN_Model
 
 
 # Deep Q-learning Agent
