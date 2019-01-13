@@ -73,14 +73,14 @@ class Trainer():
         self.stats_logger.log_fitting(self.fit_time, loss, accuracy, q, self.agent.epsilon)
 
     def _update_game_result(self, scn):
-        if scn == 'player_win':
+        if scn == FourInARowEnv.DONE_PLAYER_WIN:
             self.winning += 1
             self.round_win += 1
-        elif scn == 'npc_win':
+        elif scn == FourInARowEnv.DONE_NPC_WIN:
             self.lossing += 1
-        elif scn == 'player_wrong_move':
+        elif scn ==  FourInARowEnv.DONE_PLAYER_WRONG_MOVE:
             self.wrong_move += 1
-        elif scn == 'no_space':
+        elif scn == FourInARowEnv.DONE_DRAW_GAME: 
             self.draw_game += 1
 
     def run_qlearning(self, trial_round, env, agent, max_number_of_episodes):

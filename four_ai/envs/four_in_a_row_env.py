@@ -41,6 +41,36 @@ class FourInARowEnv(gym.Env):
 
         state = ( self.board.copy() , act_row, act_col )
     '''
+    DONE_CONTINUE = 0 
+    DONE_PLAYER_WIN = 1
+    DONE_PLAYER_WRONG_MOVE = 2
+    DONE_NPC_WIN = 3
+    DONE_NPC_WRONG_MOVE = 4
+    DONE_DRAW_GAME = 5
+
+    REWARD_SCALER_PLAYED = True
+    REWARD_SCALER_SPACE = False
+
+    ##### this reward table only works for 7x6 board. 
+        ###  The offsets and normalize_factor need to be retuned (recal) for other board size and discount factor
+    NORMALIZE_FACTOR = 95
+    REWARD_TABLE = {
+        ### reward , done
+        DONE_CONTINUE : [ 0 , REWARD_SCALER_PLAYED  , 0,  False],    # more played, longer step, higher reward
+        DONE_PLAYER_WIN : [ 3 , REWARD_SCALER_SPACE , 0.0001,  True] ,   # more space = quick win, higher reward
+        DONE_PLAYER_WRONG_MOVE : [ -0.1, REWARD_SCALER_SPACE , -100 , True] ,    # more space = quick wrong move,  higher neg reward
+        DONE_NPC_WIN : [ -1 , REWARD_SCALER_SPACE , -3, True],     # more space = quick loss, higher neg reward
+        DONE_DRAW_GAME : [ -0.02 , REWARD_SCALER_PLAYED  , -1 ,  True],
+        DONE_NPC_WRONG_MOVE : [ +1.0 , REWARD_SCALER_SPACE , 0 , True]        # only in agent testing
+    }
+    '''
+            'continue' : [ 0 , 'played' , 0,  False],    # more played, longer step, higher reward
+            'player_win' : [ 3 , 'space', 0.0001,  True] ,   # more space = quick win, higher reward
+            'player_wrong_move' : [ -0.1, 'space' , -100 , True] ,    # more space = quick wrong move,  higher neg reward
+            'npc_win' : [ -1 , 'space', -3, True],     # more space = quick loss, higher neg reward
+            'no_space' : [ -0.02 , 'played' , -1 ,  True],
+            'npc_wrong_move' : [ +1.0 , 'space' , 0 , True]        # only in agent testing
+            '''
 
     def __init__(self, npc_agent=None, test_agent=False):
         self.b_width = 7
@@ -76,38 +106,24 @@ class FourInARowEnv(gym.Env):
         self.placed_button += 1
 
     def finish_step(self, scenario):
-        ##### this reward table only works for 7x6 board. 
-         ###  The offsets and normalize_factor need to be retuned (recal) for other board size and discount factor
-        reward_table = {
-            ### reward , done
-            'continue' : [ 0 , 'played' , 0,  False],    # more played, longer step, higher reward
-            'player_win' : [ 3 , 'space', 0.0001,  True] ,   # more space = quick win, higher reward
-            'player_wrong_move' : [ -0.1, 'space' , -100 , True] ,    # more space = quick wrong move,  higher neg reward
-            'npc_win' : [ -1 , 'space', -3, True],     # more space = quick loss, higher neg reward
-            'no_space' : [ -0.02 , 'played' , -1 ,  True],
-            'npc_wrong_move' : [ +1.0 , 'space' , 0 , True]        # only in agent testing
 
-        }
-        normalize_factor = 95
-
-        done = False if scenario == 'continue' else True
+        done = False if scenario == FourInARowEnv.DONE_CONTINUE else True
         num_played_button = np.count_nonzero( self.board )
         num_space = self.max_placed_button - num_played_button 
 
 
-        base_reward = reward_table[scenario][0]
-        scaling_type = reward_table[scenario][1]
-        offset = reward_table[scenario][2]
-        done = reward_table[scenario][3]
+        base_reward = FourInARowEnv.REWARD_TABLE[scenario][0]
+        scaling_type = FourInARowEnv.REWARD_TABLE[scenario][1]
+        offset = FourInARowEnv.REWARD_TABLE[scenario][2]
+        done = FourInARowEnv.REWARD_TABLE[scenario][3]
 
-        if scaling_type == 'space' :
+        if scaling_type == FourInARowEnv.REWARD_SCALER_SPACE :
             scaling = num_space
-        elif scaling_type == 'played' :
+        else :
+            ### scaling_type == FourInARowEnv.REWARD_SCALER_PLAYED
             scaling = num_played_button
-        else:
-            scaling = 1
 
-        reward = ( base_reward * scaling + offset ) / normalize_factor
+        reward = ( base_reward * scaling + offset ) / NORMALIZE_FACTOR
 
         state = self.board.copy()
 
@@ -128,15 +144,15 @@ class FourInARowEnv(gym.Env):
 
         # player wrong move
         if act_row == -1:  # wrong move
-            return True, 'player_wrong_move'
+            return True,  FourInARowEnv.DONE_PLAYER_WRONG_MOVE 
 
         # player won
         if done:
-            return True , 'player_win'
+            return True , FourInARowEnv.DONE_PLAYER_WIN
 
         ## check no space
         if self.placed_button >= self.max_placed_button:
-            return True, 'no_space'
+            return True,  FourInARowEnv.DONE_DRAW_GAME 
 
         return False , ''
 
@@ -207,22 +223,22 @@ class FourInARowEnv(gym.Env):
             else:
                 #npc wrong move
                 self.commit_move(new_board, new_avail_row)
-                return True, 'npc_wrong_move'
+                return True, FourInARowEnv.DONE_NPC_WRONG_MOVE
 
 
         self.commit_move(new_board, new_avail_row)
 
         #check is npc won
         if done:
-            return True, 'npc_win'
+            return True, FourInARowEnv.DONE_NPC_WIN 
 
         ## check no space
         ##
         ##  draw game
         if self.placed_button >= self.max_placed_button:
-            return True, 'no_space'
+            return True, FourInARowEnv.DONE_DRAW_GAME 
 
-        return False, 'continue'
+        return False, FourInARowEnv.DONE_CONTINUE 
 
     def step(self, action):
 
@@ -236,7 +252,7 @@ class FourInARowEnv(gym.Env):
         if done:
             return self.finish_step(scenario)
 
-        return self.finish_step('continue')
+        return self.finish_step( FourInARowEnv.DONE_CONTINUE )
 
     def reset(self):
         self.board = np.zeros((self.b_height, self.b_width)).astype(int)
